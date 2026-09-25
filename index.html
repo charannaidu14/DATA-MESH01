@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071322">
+  <meta name="description" content="DATA MESH — distributed object storage management, designed for resilience and ready for live infrastructure data.">
+  <title>DATA MESH — Storage Operations</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="#dashboard" aria-label="DATA MESH home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>DATA<span class="brand-accent">MESH</span></span>
+      </a>
+
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="side-nav">
+        <a class="side-link active" href="#dashboard" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span>Dashboard</a>
+        <a class="side-link" href="#storage"><span class="nav-icon" aria-hidden="true">▤</span>Storage</a>
+        <a class="side-link" href="#nodes"><span class="nav-icon" aria-hidden="true">▦</span>Nodes</a>
+        <a class="side-link" href="#replication"><span class="nav-icon" aria-hidden="true">⤧</span>Replication</a>
+        <a class="side-link" href="#recovery"><span class="nav-icon" aria-hidden="true">↻</span>Recovery</a>
+        <a class="side-link" href="#integrity"><span class="nav-icon" aria-hidden="true">◇</span>Data integrity</a>
+        <a class="side-link" href="#activity"><span class="nav-icon" aria-hidden="true">≡</span>Activity logs</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-note"><span class="note-icon" aria-hidden="true">i</span><div><strong>New to DATA MESH?</strong><p>Connect a storage cluster to start monitoring your infrastructure.</p></div></div>
+        <div class="profile"><span class="profile-mark" aria-hidden="true">DM</span><span><strong>Workspace</strong><small>Cluster not connected</small></span><span class="profile-menu" aria-hidden="true">···</span></div>
+      </div>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong>Dashboard</strong></div>
+        <a class="topbar-brand" href="#dashboard" aria-label="DATA MESH home"><span>DATA<span class="brand-accent">MESH</span></span></a>
+        <div class="topbar-actions">
+          <span class="connection-badge"><i aria-hidden="true"></i> Disconnected</span>
+          <button class="icon-button" type="button" aria-label="Notifications" disabled><span aria-hidden="true">♧</span></button>
+          <span class="top-avatar" aria-label="Workspace account">DM</span>
+        </div>
+      </header>
+
+      <main id="dashboard">
+        <section class="welcome-section" aria-labelledby="welcome-title">
+          <div>
+            <p class="eyebrow">DISTRIBUTED STORAGE OPERATIONS</p>
+            <h1 id="welcome-title">DATA MESH</h1>
+            <p class="welcome-copy">Your storage infrastructure, in one clear view. Track capacity, objects, node health, replication, and recovery as your cluster reports them.</p>
+          </div>
+          <a class="button button-primary" href="#connect"><span aria-hidden="true">↗</span> View connection status</a>
+        </section>
+
+        <section class="connection-banner" id="connect" aria-label="Cluster connection status">
+          <span class="banner-symbol" aria-hidden="true">↗</span>
+          <div class="banner-copy"><strong>Your workspace is ready to connect</strong><p>Connect a storage cluster to see live capacity, node health, and activity. Until then, metrics remain blank—no sample data is shown.</p></div>
+          <span class="state-tag state-disconnected">DISCONNECTED</span>
+        </section>
+
+        <section class="section-block" aria-labelledby="overview-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">AT A GLANCE</p><h2 id="overview-title">System overview</h2></div>
+            <span class="section-meta"><span class="state-indicator"></span> Metrics appear after connection</span>
+          </div>
+          <div class="metric-grid">
+            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Storage capacity</span><span class="metric-icon" aria-hidden="true">▤</span></div><strong class="metric-value">—</strong><span class="metric-caption">Connect a cluster to view capacity</span><span class="metric-foot">Used space compared with total capacity</span></article>
+            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Available storage</span><span class="metric-icon" aria-hidden="true">◫</span></div><strong class="metric-value">—</strong><span class="metric-caption">Available space is not reported yet</span><span class="metric-foot">Free capacity across the cluster</span></article>
+            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Node health</span><span class="metric-icon" aria-hidden="true">▦</span></div><strong class="metric-value">—</strong><span class="metric-caption">Node status is not reported yet</span><span class="metric-foot">Healthy nodes compared with connected nodes</span></article>
+            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Replication health</span><span class="metric-icon" aria-hidden="true">⤧</span></div><strong class="metric-value">—</strong><span class="metric-caption">Replication status is not reported yet</span><span class="metric-foot">Replica health and synchronization state</span></article>
+            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>System availability</span><span class="metric-icon" aria-hidden="true">◷</span></div><strong class="metric-value">—</strong><span class="metric-caption">Availability data is not reported yet</span><span class="metric-foot">Uptime for the selected reporting period</span></article>
+            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Storage throughput</span><span class="metric-icon" aria-hidden="true">⌁</span></div><strong class="metric-value">—</strong><span class="metric-caption">Read and write data is not reported yet</span><span class="metric-foot">Storage activity over time</span></article>
+          </div>
+        </section>
+
+        <section class="content-grid section-block" id="storage" aria-label="Storage capacity and objects">
+          <article class="panel detail-panel capacity-panel" data-state="disconnected">
+            <div class="panel-heading"><div><p class="eyebrow">CAPACITY</p><h3>Storage usage</h3></div><span class="state-tag state-disconnected">NO DATA</span></div>
+            <div class="usage-visual"><div class="usage-ring" aria-hidden="true"><span>—</span></div><div class="usage-summary"><strong>Capacity details will appear here</strong><p>Connect a cluster to see how much space is used, available, and reserved.</p><span class="muted-label">Used <b>—</b></span><span class="muted-label">Available <b>—</b></span></div></div>
+            <div class="empty-inline"><span class="empty-icon" aria-hidden="true">i</span> Your capacity breakdown will appear as soon as the cluster reports it.</div>
+          </article>
+
+          <article class="panel detail-panel upload-panel">
+            <div class="panel-heading"><div><p class="eyebrow">OBJECT STORAGE</p><h3>Upload objects</h3></div><span class="state-tag state-disabled">INACTIVE</span></div>
+            <div class="upload-zone" aria-label="Upload unavailable while disconnected"><span class="upload-icon" aria-hidden="true">↑</span><strong>Connect a cluster to upload objects</strong><p>Once connected, upload support depends on the capabilities of your storage backend.</p><button class="button button-muted" type="button" disabled>Select files</button></div>
+          </article>
+        </section>
+
+        <section class="section-block" aria-labelledby="objects-title">
+          <div class="section-heading"><div><p class="eyebrow">OBJECT BROWSER</p><h2 id="objects-title">Objects</h2></div><span class="section-meta">Connect a cluster to browse objects</span></div>
+          <div class="panel table-panel">
+            <div class="table-toolbar"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search objects" placeholder="Search objects" disabled></label><button class="filter-button" type="button" disabled>Filters <span aria-hidden="true">⌄</span></button></div>
+            <div class="data-table" role="table" aria-label="Object list">
+              <div class="table-row table-header" role="row"><span role="columnheader">OBJECT NAME</span><span role="columnheader">SIZE</span><span role="columnheader">LAST MODIFIED</span><span role="columnheader">STATUS</span></div>
+              <div class="table-empty" role="row"><span class="empty-icon large" aria-hidden="true">▤</span><strong>Your object list is waiting for a connection</strong><p>Connect a storage cluster to browse, search, and review stored objects.</p><span class="state-tag state-disconnected">DISCONNECTED</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-block" id="nodes" aria-labelledby="nodes-title">
+          <div class="section-heading"><div><p class="eyebrow">INFRASTRUCTURE</p><h2 id="nodes-title">Storage nodes</h2><p class="section-description">Monitor node health and resource utilization across your cluster.</p></div><span class="state-tag state-disconnected">NO DATA</span></div>
+          <div class="panel empty-state"><span class="empty-icon large" aria-hidden="true">▦</span><strong>Node insights will appear after connection</strong><p>Connect a cluster to monitor node health and reported CPU, memory, disk, and network usage.</p><div class="empty-fields"><span>Node status <b>—</b></span><span>CPU <b>—</b></span><span>Memory <b>—</b></span><span>Disk <b>—</b></span><span>Network <b>—</b></span></div></div>
+        </section>
+
+        <section class="section-block" id="replication" aria-labelledby="replication-title">
+          <div class="section-heading"><div><p class="eyebrow">DATA PROTECTION</p><h2 id="replication-title">Replication topology</h2><p class="section-description">View primary and replica relationships and their reported health.</p></div><span class="state-tag state-disconnected">UNAVAILABLE</span></div>
+          <article class="panel replication-panel">
+            <div class="topology" aria-label="Replication topology layout awaiting backend data">
+              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Primary node</strong><small>Waiting for cluster data</small></div>
+              <span class="topology-link" aria-hidden="true"><i></i></span>
+              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Replica 1</strong><small>Waiting for cluster data</small></div>
+              <span class="topology-link" aria-hidden="true"><i></i></span>
+              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Replica 2</strong><small>Waiting for cluster data</small></div>
+              <span class="topology-link" aria-hidden="true"><i></i></span>
+              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Replica 3</strong><small>Waiting for cluster data</small></div>
+            </div>
+            <div class="topology-note"><span class="state-indicator"></span> Topology not yet available <span class="note-separator">·</span> Replica relationships and health will appear when your cluster reports them.</div>
+          </article>
+        </section>
+
+        <section class="section-block" id="recovery" aria-labelledby="recovery-title">
+          <div class="section-heading"><div><p class="eyebrow">FAULT TOLERANCE</p><h2 id="recovery-title">Recovery &amp; repair</h2><p class="section-description">Track reported failures, replica repairs, and recovery progress.</p></div><span class="state-tag state-disconnected">NO EVENTS</span></div>
+          <div class="content-grid recovery-grid">
+            <article class="panel detail-panel recovery-panel">
+              <div class="panel-heading"><div><p class="eyebrow">RECOVERY WORKFLOW</p><h3>Recovery status</h3></div><span class="state-tag state-disconnected">NOT CONNECTED</span></div>
+              <ol class="recovery-steps">
+                <li><span class="step-marker">1</span><div><strong>Failure detected</strong><small>Waiting for recovery events</small></div></li>
+                <li><span class="step-marker">2</span><div><strong>Replica identified</strong><small>Replica repair source not available</small></div></li>
+                <li><span class="step-marker">3</span><div><strong>Recovery started</strong><small>No recovery progress received</small></div></li>
+                <li><span class="step-marker">4</span><div><strong>Data synchronized</strong><small>Synchronization status unavailable</small></div></li>
+                <li><span class="step-marker">5</span><div><strong>System restored</strong><small>Restoration status unavailable</small></div></li>
+              </ol>
+            </article>
+            <article class="panel detail-panel history-panel"><div class="panel-heading"><div><p class="eyebrow">EVENT HISTORY</p><h3>Recovery history</h3></div></div><div class="compact-empty"><span class="empty-icon" aria-hidden="true">↻</span><strong>No recovery events yet</strong><p>Reported repair and recovery events will be listed here after the cluster connects.</p></div></article>
+          </div>
+        </section>
+
+        <section class="section-block" id="integrity" aria-labelledby="integrity-title">
+          <div class="section-heading"><div><p class="eyebrow">VERIFICATION</p><h2 id="integrity-title">Data integrity</h2><p class="section-description">Review checksum results and corruption alerts reported by your storage system.</p></div><span class="state-tag state-disconnected">NO DATA</span></div>
+          <article class="panel integrity-panel">
+            <div class="integrity-overview"><div class="integrity-stat"><span>Integrity checks</span><strong>—</strong><small>No integrity data available</small></div><div class="integrity-stat"><span>Verification status</span><strong class="small-value">Awaiting data</strong><small>Connected backend required</small></div><div class="integrity-stat"><span>Corruption detection</span><strong class="small-value">Unavailable</strong><small>No verification results received</small></div><div class="integrity-stat"><span>Checksum details</span><strong class="small-value">—</strong><small>Algorithm and values not reported</small></div></div>
+            <div class="verification-empty"><span class="empty-icon" aria-hidden="true">◇</span><div><strong>Verification results will appear here</strong><p>Connect a cluster to review verified objects, integrity warnings, and re-check results.</p></div></div>
+            <div class="verification-legend" aria-label="Possible verification statuses"><span><i class="legend-dot verified"></i>Verified</span><span><i class="legend-dot warning"></i>Warning</span><span><i class="legend-dot checking"></i>Re-checking</span></div>
+          </article>
+        </section>
+
+        <section class="section-block" aria-labelledby="rebalance-title">
+          <div class="section-heading"><div><p class="eyebrow">DISTRIBUTION</p><h2 id="rebalance-title">Storage rebalancing</h2><p class="section-description">Understand how data placement changes across storage resources.</p></div><span class="state-tag state-disconnected">UNAVAILABLE</span></div>
+          <article class="panel rebalance-panel"><span class="empty-icon large" aria-hidden="true">⇌</span><div><strong>Balance details are not available yet</strong><p>Connect a cluster to see how data is distributed and when rebalancing last occurred.</p></div><div class="rebalance-placeholder"><span>Distribution status <b>—</b></span><span>Last rebalance <b>—</b></span></div></article>
+        </section>
+
+        <section class="section-block" id="activity" aria-labelledby="activity-title">
+          <div class="section-heading"><div><p class="eyebrow">AUDIT TRAIL</p><h2 id="activity-title">Activity logs</h2><p class="section-description">Review timestamped system events reported by your connected cluster.</p></div><span class="state-tag state-disconnected">NO EVENTS</span></div>
+          <article class="panel activity-panel">
+            <div class="event-header"><span>TIME</span><span>EVENT TYPE</span><span>STATUS</span><span>MESSAGE</span></div>
+            <div class="activity-empty"><span class="empty-icon" aria-hidden="true">≡</span><strong>Your activity feed is ready</strong><p>Cluster events will appear here with their time, status, and details.</p></div>
+          </article>
+        </section>
+
+        <section class="state-reference" aria-labelledby="state-reference-title">
+          <div><p class="eyebrow">DATA TRANSPARENCY</p><h2 id="state-reference-title">Know what your data is telling you.</h2><p>Every status is clearly labeled, so you can tell when information is live, loading, unavailable, or needs attention.</p></div>
+          <div class="state-list"><span class="state-tag state-real">REAL DATA</span><span class="state-tag state-loading">LOADING</span><span class="state-tag state-empty">NO DATA</span><span class="state-tag state-error">ERROR</span><span class="state-tag state-disconnected">DISCONNECTED</span></div>
+        </section>
+      </main>
+
+      <footer class="footer"><a class="brand footer-brand" href="#dashboard"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>DATA<span class="brand-accent">MESH</span></span></a><span>Distributed storage operations, made clear.</span><span class="footer-status"><i></i> Cluster disconnected</span></footer>
+    </div>
+  </div>
+  <script src="app.js" defer></script>
+
+</body>
+</html>

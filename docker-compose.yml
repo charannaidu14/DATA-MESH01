@@ -1,0 +1,42 @@
+version: '2'
+services:
+  minio1:
+    image: 'bitnamilegacy/minio:latest'
+    ports:
+      - '9001:9000'
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin12345
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
+      - MINIO_SKIP_CLIENT=yes
+  minio2:
+    image: 'bitnamilegacy/minio:latest'
+    ports:
+      - '9002:9000'
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin12345
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
+      - MINIO_SKIP_CLIENT=yes
+  minio3:
+    image: 'bitnamilegacy/minio:latest'
+    ports:
+      - '9003:9000'
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin12345
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
+      - MINIO_SKIP_CLIENT=yes
+  minio4:
+    image: 'bitnamilegacy/minio:latest'
+    ports:
+      - '9004:9000'
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin12345
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
+      - MINIO_SKIP_CLIENT=yes
