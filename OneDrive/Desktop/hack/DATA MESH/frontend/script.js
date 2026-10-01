@@ -264,24 +264,56 @@ function updateCapacity(o) {
 function updateNodes(o, nodes) {
   const fields = document.querySelectorAll("#nodes .empty-fields b");
   const online = nodes.filter((n) => n.status === "online").length;
+
+  const cpuValues = nodes
+    .map((n) => n.cpuPercent ?? n.cpu)
+    .filter((v) => v !== undefined && v !== null && v !== "");
+
+  const cpuDisplay = cpuValues.length
+    ? cpuValues[0] + (typeof cpuValues[0] === "number" ? "%" : "")
+    : "—";
+
   const values = [
     online + "/" + nodes.length + " online",
-    "Not measured",
+    cpuDisplay,
     show(o.memoryUsed) + " of host RAM",
     show(o.totalStorageUsed),
     "Local only"
   ];
-  fields.forEach((el, i) => (el.textContent = values[i] ?? "—"));
+
+  fields.forEach((el, i) => {
+    el.textContent = values[i] ?? "—";
+  });
 
   const title = q("#nodes .empty-state strong");
   const text = q("#nodes .empty-state p");
-  if (title) title.textContent = "4 storage nodes (1 primary, 3 replicas)";
+
+  if (title) {
+    title.textContent = "4 storage nodes (1 primary, 3 replicas)";
+  }
+
   if (text) {
     text.textContent = nodes
-      .map((n) => n.name + ": " + n.status + ", " + n.objects + " object(s), " + formatBytes(n.bytes))
+      .map(
+        (n) =>
+          n.name +
+          ": " +
+          n.status +
+          ", " +
+          n.objects +
+          " object(s), " +
+          formatBytes(n.bytes) +
+          ", CPU " +
+          (n.cpu ?? "—")
+      )
       .join(" · ");
   }
-  setTag(q("#nodes .section-heading > .state-tag"), "REAL DATA", "state-real");
+
+  setTag(
+    q("#nodes .section-heading > .state-tag"),
+    "REAL DATA",
+    "state-real"
+  );
 }
 
 /* ---------- Replication ---------- */
@@ -662,7 +694,9 @@ function setupUpload() {
 
 function updateSendButton() {
   const sendBtn = $("sendUploadButton");
-  if (sendBtn) sendBtn.disabled = !(clusterConnected && selectedFiles.length > 0);
+  if (sendBtn) {sendBtn.disabled = selectedFiles.length === 0 ;
+
+  }
 }
 
 function setUploadMessage(msg) {

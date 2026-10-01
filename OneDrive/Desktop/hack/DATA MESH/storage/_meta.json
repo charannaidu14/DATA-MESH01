@@ -51,6 +51,60 @@
   },
   "activity": [
     {
+      "time": "2026-10-01T10:05:52.057Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T10:05:52.027Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T10:05:50.255Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 8 object(s): 8 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T10:05:48.122Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T10:05:47.971Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T09:30:52.966Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T09:30:52.923Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T09:30:51.632Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T09:30:51.577Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
       "time": "2026-10-01T07:59:18.185Z",
       "type": "recovery",
       "status": "ok",
@@ -455,7 +509,7 @@
   ],
   "failed": [],
   "lastVerification": {
-    "time": "2026-10-01T07:59:02.712Z",
+    "time": "2026-10-01T10:05:50.255Z",
     "algorithm": "SHA-256",
     "checked": 8,
     "verified": 8,
@@ -657,14 +711,14 @@
     ]
   },
   "lastRecovery": {
-    "time": "2026-10-01T07:59:18.185Z",
+    "time": "2026-10-01T10:05:48.122Z",
     "failedNodes": [],
     "degradedObjects": 0,
     "replicasRestored": 0,
     "unrecoverable": 0
   },
   "lastRebalance": {
-    "time": "2026-10-01T07:59:04.955Z",
+    "time": "2026-10-01T10:05:52.057Z",
     "replicasCopied": 0,
     "objectsMoved": 0,
     "bytesMoved": 0
