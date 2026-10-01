@@ -1,5 +1,5 @@
 console.log('DATA MESH frontend loaded');
-const API_BASE = '/api';
+const API_BASE = 'http://localhost:3000/api';
 
 const dashboardState = {
   connected: false,

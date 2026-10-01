@@ -1,0 +1,672 @@
+{
+  "objects": {
+    "1790839032311-ccttt.pdf.pdf": {
+      "originalName": "ccttt.pdf.pdf",
+      "size": 145755,
+      "sha256": "9a1e0addc5c94ace08b7639753902e0118041f8331f9befea101d44c49da839f",
+      "uploadedAt": "2026-10-01T07:17:12.314Z"
+    },
+    "1790839763572-report.cse111.pdf": {
+      "originalName": "report.cse111.pdf",
+      "size": 124801,
+      "sha256": "041f75c5c36ac0cd8cf643d30d29dcecd86ef94d7a7bde11e58625d04b5ba72b",
+      "uploadedAt": "2026-10-01T07:29:23.578Z"
+    },
+    "1790839776459-CA1_Question_Paper..pdf": {
+      "originalName": "CA1_Question_Paper..pdf",
+      "size": 9978695,
+      "sha256": "eb19a4fe915e2ae4c7043ef679c0daae0de2fa5e82be6e886758858d1fa8ad84",
+      "uploadedAt": "2026-10-01T07:29:36.476Z"
+    },
+    "1790839786309-ac.jpeg": {
+      "originalName": "ac.jpeg",
+      "size": 251475,
+      "sha256": "b83665562cfb5dbd028a2c97b859287119132fe350c63c9c5b9d6cf5ef299d20",
+      "uploadedAt": "2026-10-01T07:29:46.310Z"
+    },
+    "1790841295358-CA1_Question_Paper..pdf": {
+      "originalName": "CA1_Question_Paper..pdf",
+      "size": 9978695,
+      "sha256": "eb19a4fe915e2ae4c7043ef679c0daae0de2fa5e82be6e886758858d1fa8ad84",
+      "uploadedAt": "2026-10-01T07:54:55.418Z"
+    },
+    "1790841307141-class room programme.py": {
+      "originalName": "class room programme.py",
+      "size": 81,
+      "sha256": "c672dd5c839c81c479cecd7e0a0b6e52daea5b09576c46957752d88459a5dfd1",
+      "uploadedAt": "2026-10-01T07:55:07.151Z"
+    },
+    "1790841324833-Python_Unit1_Rechecked_Question_Bank_140_Coding_Questions_FINAL.pdf": {
+      "originalName": "Python_Unit1_Rechecked_Question_Bank_140_Coding_Questions_FINAL.pdf",
+      "size": 140693,
+      "sha256": "44f371e6b10318e6cb8beda345ac1d0525586de1f89f290b26362f0c8614db14",
+      "uploadedAt": "2026-10-01T07:55:24.845Z"
+    },
+    "1790841340475-HTML_Practice_Questions.pdf": {
+      "originalName": "HTML_Practice_Questions.pdf",
+      "size": 41622,
+      "sha256": "d4c7348d1d99976a74dd48c890d9effcb1f723dd39349293037924f6cbb147d6",
+      "uploadedAt": "2026-10-01T07:55:40.487Z"
+    }
+  },
+  "activity": [
+    {
+      "time": "2026-10-01T07:59:18.185Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:59:18.054Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:59:04.955Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:59:04.925Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:59:02.712Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 8 object(s): 8 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T07:59:00.618Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 8 object(s): 8 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T07:58:54.018Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:53.866Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:52.738Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:52.615Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:51.755Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:51.673Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:51.533Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:51.365Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:51.308Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:51.210Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:51.144Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:51.047Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:50.967Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:50.878Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:50.816Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:50.723Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:50.645Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:50.554Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:50.434Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:50.354Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:50.244Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:50.155Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:50.039Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:49.953Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:49.830Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:49.744Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:49.576Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:49.488Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:58:48.465Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:58:48.341Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:55:40.487Z",
+      "type": "upload",
+      "status": "ok",
+      "message": "Uploaded HTML_Practice_Questions.pdf (40.65 KB) to 4/4 nodes"
+    },
+    {
+      "time": "2026-10-01T07:55:24.845Z",
+      "type": "upload",
+      "status": "ok",
+      "message": "Uploaded Python_Unit1_Rechecked_Question_Bank_140_Coding_Questions_FINAL.pdf (137.40 KB) to 4/4 nodes"
+    },
+    {
+      "time": "2026-10-01T07:55:07.151Z",
+      "type": "upload",
+      "status": "ok",
+      "message": "Uploaded class room programme.py (81 B) to 4/4 nodes"
+    },
+    {
+      "time": "2026-10-01T07:54:55.419Z",
+      "type": "upload",
+      "status": "ok",
+      "message": "Uploaded CA1_Question_Paper..pdf (9.52 MB) to 4/4 nodes"
+    },
+    {
+      "time": "2026-10-01T07:46:52.098Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:46:52.066Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:46:50.622Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:46:50.593Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:46:50.452Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:46:50.399Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:46:50.278Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:46:50.214Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:46:49.560Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:46:49.481Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:46:48.449Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-01T07:46:48.402Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-01T07:42:38.919Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 12 replica(s) restored across 4 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:42:38.804Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:42:32.857Z",
+      "type": "failure",
+      "status": "error",
+      "message": "Simulated failure: node-4 went offline and lost 4 replica(s)"
+    },
+    {
+      "time": "2026-10-01T07:42:32.318Z",
+      "type": "failure",
+      "status": "error",
+      "message": "Simulated failure: node-3 went offline and lost 4 replica(s)"
+    },
+    {
+      "time": "2026-10-01T07:42:31.120Z",
+      "type": "failure",
+      "status": "error",
+      "message": "Simulated failure: node-2 went offline and lost 4 replica(s)"
+    },
+    {
+      "time": "2026-10-01T07:42:25.844Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 4 object(s): 4 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T07:42:25.708Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 4 object(s): 4 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T07:42:24.982Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 4 object(s): 4 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T07:40:32.317Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 4 object(s): 4 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-01T07:40:26.127Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-01T07:40:25.997Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-01T07:39:35.335Z",
+      "type": "migration",
+      "status": "ok",
+      "message": "Imported ac.jpeg into all nodes"
+    },
+    {
+      "time": "2026-10-01T07:39:35.327Z",
+      "type": "migration",
+      "status": "ok",
+      "message": "Imported CA1_Question_Paper..pdf into all nodes"
+    },
+    {
+      "time": "2026-10-01T07:39:35.262Z",
+      "type": "migration",
+      "status": "ok",
+      "message": "Imported report.cse111.pdf into all nodes"
+    },
+    {
+      "time": "2026-10-01T07:39:35.253Z",
+      "type": "migration",
+      "status": "ok",
+      "message": "Imported ccttt.pdf.pdf into all nodes"
+    }
+  ],
+  "failed": [],
+  "lastVerification": {
+    "time": "2026-10-01T07:59:02.712Z",
+    "algorithm": "SHA-256",
+    "checked": 8,
+    "verified": 8,
+    "warnings": 0,
+    "corrupt": 0,
+    "results": [
+      {
+        "name": "1790839032311-ccttt.pdf.pdf",
+        "originalName": "ccttt.pdf.pdf",
+        "checksum": "9a1e0addc5c94ace08b7639753902e0118041f8331f9befea101d44c49da839f",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790839763572-report.cse111.pdf",
+        "originalName": "report.cse111.pdf",
+        "checksum": "041f75c5c36ac0cd8cf643d30d29dcecd86ef94d7a7bde11e58625d04b5ba72b",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790839776459-CA1_Question_Paper..pdf",
+        "originalName": "CA1_Question_Paper..pdf",
+        "checksum": "eb19a4fe915e2ae4c7043ef679c0daae0de2fa5e82be6e886758858d1fa8ad84",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790839786309-ac.jpeg",
+        "originalName": "ac.jpeg",
+        "checksum": "b83665562cfb5dbd028a2c97b859287119132fe350c63c9c5b9d6cf5ef299d20",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790841295358-CA1_Question_Paper..pdf",
+        "originalName": "CA1_Question_Paper..pdf",
+        "checksum": "eb19a4fe915e2ae4c7043ef679c0daae0de2fa5e82be6e886758858d1fa8ad84",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790841307141-class room programme.py",
+        "originalName": "class room programme.py",
+        "checksum": "c672dd5c839c81c479cecd7e0a0b6e52daea5b09576c46957752d88459a5dfd1",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790841324833-Python_Unit1_Rechecked_Question_Bank_140_Coding_Questions_FINAL.pdf",
+        "originalName": "Python_Unit1_Rechecked_Question_Bank_140_Coding_Questions_FINAL.pdf",
+        "checksum": "44f371e6b10318e6cb8beda345ac1d0525586de1f89f290b26362f0c8614db14",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "name": "1790841340475-HTML_Practice_Questions.pdf",
+        "originalName": "HTML_Practice_Questions.pdf",
+        "checksum": "d4c7348d1d99976a74dd48c890d9effcb1f723dd39349293037924f6cbb147d6",
+        "status": "verified",
+        "nodes": [
+          {
+            "node": "node-1",
+            "status": "ok"
+          },
+          {
+            "node": "node-2",
+            "status": "ok"
+          },
+          {
+            "node": "node-3",
+            "status": "ok"
+          },
+          {
+            "node": "node-4",
+            "status": "ok"
+          }
+        ]
+      }
+    ]
+  },
+  "lastRecovery": {
+    "time": "2026-10-01T07:59:18.185Z",
+    "failedNodes": [],
+    "degradedObjects": 0,
+    "replicasRestored": 0,
+    "unrecoverable": 0
+  },
+  "lastRebalance": {
+    "time": "2026-10-01T07:59:04.955Z",
+    "replicasCopied": 0,
+    "objectsMoved": 0,
+    "bytesMoved": 0
+  }
+}

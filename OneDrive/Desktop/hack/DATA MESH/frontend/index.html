@@ -7,11 +7,6 @@
   <meta name="description" content="DATA MESH — distributed object storage management, designed for resilience and ready for live infrastructure data.">
   <title>DATA MESH — Storage Operations</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="server.js">
-  <link rel="stylesheet" href="app.js">
-  <link rel="stylesheet" herf="package.jason">
-  <link rel="stylesheet" href="package-lock.json">
-  <link rel="stylesheet" href="docker-compose.yml">
 </head>
 <body>
   <div class="app-shell">
@@ -43,7 +38,9 @@
         <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong>Dashboard</strong></div>
         <a class="topbar-brand" href="#dashboard" aria-label="DATA MESH home"><span>DATA<span class="brand-accent">MESH</span></span></a>
         <div class="topbar-actions">
-          <span class="connection-badge"><i aria-hidden="true"></i> Disconnected</span>
+          <span class="connection-badge" id="connectionStatus">
+            <i aria-hidden="true"></i> Disconnected
+          </span>
           <button class="icon-button" type="button" aria-label="Notifications" disabled><span aria-hidden="true">♧</span></button>
           <span class="top-avatar" aria-label="Workspace account">DM</span>
         </div>
@@ -60,7 +57,7 @@
         </section>
 
         <section class="connection-banner" id="connect" aria-label="Cluster connection status">
-          <span class="banner-symbol" aria-hidden="true">↗</span>
+          <span id="bannerConnectionStatus" class="connection-badge"><i aria-hidden="true"></i> Disconnected</span>
           <div class="banner-copy"><strong>Your workspace is ready to connect</strong><p>Connect a storage cluster to see live capacity, node health, and activity. Until then, metrics remain blank—no sample data is shown.</p></div>
           <span class="state-tag state-disconnected">DISCONNECTED</span>
         </section>
@@ -81,25 +78,24 @@
         </section>
 
         <section class="content-grid section-block" id="storage" aria-label="Storage capacity and objects">
-          <article class="panel detail-panel capacity-panel" data-state="disconnected">
+                   <article id="capacityPanel" class="panel detail-panel upload-panel">
             <div class="panel-heading"><div><p class="eyebrow">CAPACITY</p><h3>Storage usage</h3></div><span class="state-tag state-disconnected">NO DATA</span></div>
             <div class="usage-visual"><div class="usage-ring" aria-hidden="true"><span>—</span></div><div class="usage-summary"><strong>Capacity details will appear here</strong><p>Connect a cluster to see how much space is used, available, and reserved.</p><span class="muted-label">Used <b>—</b></span><span class="muted-label">Available <b>—</b></span></div></div>
             <div class="empty-inline"><span class="empty-icon" aria-hidden="true">i</span> Your capacity breakdown will appear as soon as the cluster reports it.</div>
           </article>
-
-          <article class="panel detail-panel upload-panel">
-            <div class="panel-heading"><div><p class="eyebrow">OBJECT STORAGE</p><h3>Upload objects</h3></div><span class="state-tag state-disabled">INACTIVE</span></div>
-            <div class="upload-zone" aria-label="Upload unavailable while disconnected"><span class="upload-icon" aria-hidden="true">↑</span><strong>Connect a cluster to upload objects</strong><p>Once connected, upload support depends on the capabilities of your storage backend.</p><button class="button button-muted" type="button" disabled>Select files</button></div>
+          <article id="uploadObjects" class="panel detail-panel upload-panel">
+            <div class="panel-heading"><div><p class="eyebrow">OBJECT STORAGE</p><h3>Upload objects</h3></div><span class="state-tag state-disabled">CLUSTER DISCONNECTED</span></div>
+            <div class="upload-zone" aria-label="Choose files for object storage"><span class="upload-icon" aria-hidden="true">↑</span><strong>Select files to prepare them</strong><p>Files can be selected while disconnected. A connected storage backend is required to upload them.</p><input id="fileInput" type="file" multiple hidden><button id="uploadButton" class="button button-muted" type="button">Select files</button><button id="sendUploadButton" class="button button-primary upload-submit" type="button" disabled>Upload selected</button><p id="selectedFileName" class="upload-feedback" aria-live="polite">No files selected.</p></div>
           </article>
         </section>
 
         <section class="section-block" aria-labelledby="objects-title">
           <div class="section-heading"><div><p class="eyebrow">OBJECT BROWSER</p><h2 id="objects-title">Objects</h2></div><span class="section-meta">Connect a cluster to browse objects</span></div>
           <div class="panel table-panel">
-            <div class="table-toolbar"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search objects" placeholder="Search objects" disabled></label><button class="filter-button" type="button" disabled>Filters <span aria-hidden="true">⌄</span></button></div>
-            <div class="data-table" role="table" aria-label="Object list">
+            <div class="table-toolbar"><label class="search-box"><span aria-hidden="true">⌕</span><input id="objectSearch" type="search" aria-label="Search selected files" placeholder="Search selected files"></label><span class="section-meta">Local selections only · not uploaded</span></div>
+            <div class="data-table" id="objectList" role="table" aria-label="Selected object files" aria-live="polite">
               <div class="table-row table-header" role="row"><span role="columnheader">OBJECT NAME</span><span role="columnheader">SIZE</span><span role="columnheader">LAST MODIFIED</span><span role="columnheader">STATUS</span></div>
-              <div class="table-empty" role="row"><span class="empty-icon large" aria-hidden="true">▤</span><strong>Your object list is waiting for a connection</strong><p>Connect a storage cluster to browse, search, and review stored objects.</p><span class="state-tag state-disconnected">DISCONNECTED</span></div>
+              <div class="table-empty" id="objectEmpty" role="row"><span class="empty-icon large" aria-hidden="true">▤</span><strong>No files selected</strong><p>Choose files above to preview them here. They will remain local until a storage cluster is connected.</p><span class="state-tag state-disconnected">NOT UPLOADED</span></div>
             </div>
           </div>
         </section>
@@ -129,7 +125,7 @@
           <div class="section-heading"><div><p class="eyebrow">FAULT TOLERANCE</p><h2 id="recovery-title">Recovery &amp; repair</h2><p class="section-description">Track reported failures, replica repairs, and recovery progress.</p></div><span class="state-tag state-disconnected">NO EVENTS</span></div>
           <div class="content-grid recovery-grid">
             <article class="panel detail-panel recovery-panel">
-              <div class="panel-heading"><div><p class="eyebrow">RECOVERY WORKFLOW</p><h3>Recovery status</h3></div><span class="state-tag state-disconnected">NOT CONNECTED</span></div>
+              <div class="panel-heading"><div><p class="eyebrow">RECOVERY WORKFLOW</p><h3>Recovery status</h3></div><span class="state-tag state-connected">CONNECTED</span></div>
               <ol class="recovery-steps">
                 <li><span class="step-marker">1</span><div><strong>Failure detected</strong><small>Waiting for recovery events</small></div></li>
                 <li><span class="step-marker">2</span><div><strong>Replica identified</strong><small>Replica repair source not available</small></div></li>
@@ -173,7 +169,9 @@
       <footer class="footer"><a class="brand footer-brand" href="#dashboard"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>DATA<span class="brand-accent">MESH</span></span></a><span>Distributed storage operations, made clear.</span><span class="footer-status"><i></i> Cluster disconnected</span></footer>
     </div>
   </div>
-  <script src="app.js" defer></script>
+  
+  <script src="script.js"></script>
+
 
 </body>
 </html>

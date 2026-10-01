@@ -84,6 +84,8 @@ button:disabled, input:disabled { cursor: not-allowed; }
 .topbar-actions { display: flex; align-items: center; gap: 17px; }
 .connection-badge { display: flex; align-items: center; gap: 8px; color: #a8b4c9; font-size: 11px; }
 .connection-badge i, .footer-status i { width: 7px; height: 7px; border-radius: 50%; background: #71809a; box-shadow: 0 0 9px rgba(126, 145, 174, .55); }
+.connection-badge.connected i, .footer-status.connected i { background: var(--green); box-shadow: 0 0 9px rgba(101, 228, 188, .65); }
+.connection-badge.disconnected i, .footer-status.disconnected i { background: #71809a; }
 .icon-button { width: 31px; height: 31px; border: 1px solid var(--line); border-radius: 9px; color: #8190ab; background: rgba(255,255,255,.025); }
 .top-avatar { width: 29px; height: 29px; border-radius: 50%; }
 main { width: min(1370px, 100%); margin: 0 auto; padding: 47px 5.2% 70px; }
@@ -312,3 +314,11 @@ h3 { font-size: 14px; }
   border-color: rgba(117, 227, 255, .6);
   box-shadow: 0 0 0 3px rgba(117, 227, 255, .1);
 }
+
+[hidden] { display: none !important; }
+.upload-submit { min-height: 34px; margin-top: 8px; padding: 0 13px; font-size: 11px; }
+.upload-submit:disabled { cursor: not-allowed; opacity: .45; }
+.upload-feedback { min-height: 1.5em; margin: 10px 0 0 !important; color: #b9c9df !important; }
+.file-row { color: #c4d0e4; font-size: 11px; }
+.file-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-row span:last-child { color: #ffcf87; }
