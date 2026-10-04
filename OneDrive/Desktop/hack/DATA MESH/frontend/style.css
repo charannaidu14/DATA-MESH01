@@ -1,3 +1,4 @@
+
 :root {
   color-scheme: dark;
   --bg: #071a33;
@@ -84,8 +85,6 @@ button:disabled, input:disabled { cursor: not-allowed; }
 .topbar-actions { display: flex; align-items: center; gap: 17px; }
 .connection-badge { display: flex; align-items: center; gap: 8px; color: #a8b4c9; font-size: 11px; }
 .connection-badge i, .footer-status i { width: 7px; height: 7px; border-radius: 50%; background: #71809a; box-shadow: 0 0 9px rgba(126, 145, 174, .55); }
-.connection-badge.connected i, .footer-status.connected i { background: var(--green); box-shadow: 0 0 9px rgba(101, 228, 188, .65); }
-.connection-badge.disconnected i, .footer-status.disconnected i { background: #71809a; }
 .icon-button { width: 31px; height: 31px; border: 1px solid var(--line); border-radius: 9px; color: #8190ab; background: rgba(255,255,255,.025); }
 .top-avatar { width: 29px; height: 29px; border-radius: 50%; }
 main { width: min(1370px, 100%); margin: 0 auto; padding: 47px 5.2% 70px; }
@@ -313,12 +312,76 @@ h3 { font-size: 14px; }
 .search-box:focus-within {
   border-color: rgba(117, 227, 255, .6);
   box-shadow: 0 0 0 3px rgba(117, 227, 255, .1);
+
+}
+/* DATA MESH - Connected status indicator */
+.state-connected {
+  color: #65e4bc !important;
+  border-color: #65e4bc !important;
+  background: rgba(101, 228, 188, 0.12) !important;
+  box-shadow: 0 0 10px rgba(101, 228, 188, 0.35);
 }
 
-[hidden] { display: none !important; }
-.upload-submit { min-height: 34px; margin-top: 8px; padding: 0 13px; font-size: 11px; }
-.upload-submit:disabled { cursor: not-allowed; opacity: .45; }
-.upload-feedback { min-height: 1.5em; margin: 10px 0 0 !important; color: #b9c9df !important; }
-.file-row { color: #c4d0e4; font-size: 11px; }
-.file-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.file-row span:last-child { color: #ffcf87; }
+/* Green glowing connection dot */
+.state-connected::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #65e4bc;
+  box-shadow:
+    0 0 5px #65e4bc,
+    0 0 12px rgba(101, 228, 188, 0.8);
+  vertical-align: middle;
+  animation: dataMeshConnectedPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dataMeshConnectedPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+}
+/* FORCE CONNECTED GREEN DOT */
+.state-connected {
+  color: #65e4bc !important;
+  border-color: #65e4bc !important;
+  background: rgba(101, 228, 188, 0.12) !important;
+  box-shadow: 0 0 12px rgba(101, 228, 188, 0.45) !important;
+}
+
+.state-connected::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin-right: 7px !important;
+  border-radius: 50% !important;
+  background: #65e4bc !important;
+  box-shadow: 0 0 6px #65e4bc, 0 0 14px #65e4bc !important;
+  vertical-align: middle !important;
+}
+/* Connected banner green indicator */
+.connection-badge.connected {
+  color: #65e4bc !important;
+  border-color: #65e4bc !important;
+  background: rgba(101, 228, 188, 0.12) !important;
+}
+
+.connection-badge.connected i {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin-right: 7px !important;
+  border-radius: 50% !important;
+  background: #65e4bc !important;
+  box-shadow: 0 0 6px #65e4bc, 0 0 14px rgba(101, 228, 188, 0.8) !important;
+  vertical-align: middle !important;
+}

@@ -51,6 +51,84 @@
   },
   "activity": [
     {
+      "time": "2026-10-04T04:53:43.220Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-04T04:53:43.168Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-04T04:53:40.138Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 8 object(s): 8 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-04T04:53:39.231Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 8 object(s): 8 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-04T04:53:37.792Z",
+      "type": "integrity",
+      "status": "ok",
+      "message": "Verified 8 object(s): 8 ok, 0 warning(s), 0 corrupt"
+    },
+    {
+      "time": "2026-10-02T06:46:53.353Z",
+      "type": "rebalance",
+      "status": "ok",
+      "message": "Rebalancing finished: data was already evenly distributed"
+    },
+    {
+      "time": "2026-10-02T06:46:53.248Z",
+      "type": "rebalance",
+      "status": "started",
+      "message": "Rebalancing started: checking data placement on all nodes"
+    },
+    {
+      "time": "2026-10-02T06:46:19.262Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 16 replica(s) restored across 8 object(s)"
+    },
+    {
+      "time": "2026-10-02T06:46:19.052Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
+      "time": "2026-10-02T06:46:17.621Z",
+      "type": "failure",
+      "status": "error",
+      "message": "Simulated failure: node-3 went offline and lost 8 replica(s)"
+    },
+    {
+      "time": "2026-10-02T06:46:16.425Z",
+      "type": "failure",
+      "status": "error",
+      "message": "Simulated failure: node-2 went offline and lost 8 replica(s)"
+    },
+    {
+      "time": "2026-10-02T06:46:12.793Z",
+      "type": "recovery",
+      "status": "ok",
+      "message": "Recovery finished: 0 replica(s) restored across 0 object(s)"
+    },
+    {
+      "time": "2026-10-02T06:46:12.493Z",
+      "type": "recovery",
+      "status": "started",
+      "message": "Recovery started: rebuilding missing or corrupt replicas"
+    },
+    {
       "time": "2026-10-01T10:05:52.057Z",
       "type": "rebalance",
       "status": "ok",
@@ -509,7 +587,7 @@
   ],
   "failed": [],
   "lastVerification": {
-    "time": "2026-10-01T10:05:50.255Z",
+    "time": "2026-10-04T04:53:40.138Z",
     "algorithm": "SHA-256",
     "checked": 8,
     "verified": 8,
@@ -711,14 +789,17 @@
     ]
   },
   "lastRecovery": {
-    "time": "2026-10-01T10:05:48.122Z",
-    "failedNodes": [],
-    "degradedObjects": 0,
-    "replicasRestored": 0,
+    "time": "2026-10-02T06:46:19.262Z",
+    "failedNodes": [
+      "node-2",
+      "node-3"
+    ],
+    "degradedObjects": 8,
+    "replicasRestored": 16,
     "unrecoverable": 0
   },
   "lastRebalance": {
-    "time": "2026-10-01T10:05:52.057Z",
+    "time": "2026-10-04T04:53:43.220Z",
     "replicasCopied": 0,
     "objectsMoved": 0,
     "bytesMoved": 0
