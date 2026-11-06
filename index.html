@@ -84,12 +84,12 @@
 
           <article class="panel detail-panel upload-panel">
             <div class="panel-heading"><div><p class="eyebrow">OBJECT STORAGE</p><h3>Upload objects</h3></div><span class="state-tag state-disabled">INACTIVE</span></div>
-            <div class="upload-zone" aria-label="Upload unavailable while disconnected"><span class="upload-icon" aria-hidden="true">↑</span><strong>Connect a cluster to upload objects</strong><p>Once connected, upload support depends on the capabilities of your storage backend.</p><button class="button button-muted" type="button" disabled>Select files</button></div>
+            <div class="upload-zone" aria-label="Upload objects to connected storage"><span class="upload-icon" aria-hidden="true">↑</span><strong>Connect a cluster to upload objects</strong><p aria-live="polite">Once connected, upload support depends on the capabilities of your storage backend.</p><button class="button button-muted" type="button" disabled>Select files</button><input class="object-upload-input" type="file" hidden disabled></div>
           </article>
         </section>
 
         <section class="section-block" aria-labelledby="objects-title">
-          <div class="section-heading"><div><p class="eyebrow">OBJECT BROWSER</p><h2 id="objects-title">Objects</h2></div><span class="section-meta">Connect a cluster to browse objects</span></div>
+          <div class="section-heading"><div><p class="eyebrow">OBJECT BROWSER</p><h2 id="objects-title">Objects</h2></div><span class="section-meta object-section-meta">Connect a cluster to browse objects</span></div>
           <div class="panel table-panel">
             <div class="table-toolbar"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search objects" placeholder="Search objects" disabled></label><button class="filter-button" type="button" disabled>Filters <span aria-hidden="true">⌄</span></button></div>
             <div class="data-table" role="table" aria-label="Object list">
@@ -100,40 +100,32 @@
         </section>
 
         <section class="section-block" id="nodes" aria-labelledby="nodes-title">
-          <div class="section-heading"><div><p class="eyebrow">INFRASTRUCTURE</p><h2 id="nodes-title">Storage nodes</h2><p class="section-description">Monitor node health and resource utilization across your cluster.</p></div><span class="state-tag state-disconnected">NO DATA</span></div>
+          <div class="section-heading"><div><p class="eyebrow">INFRASTRUCTURE</p><h2 id="nodes-title">Storage nodes</h2><p class="section-description">Live reachability checks for each configured MinIO node. Resource utilization is not reported by the health endpoint.</p></div><span class="state-tag state-disconnected node-health-tag">NO DATA</span></div>
           <div class="panel empty-state"><span class="empty-icon large" aria-hidden="true">▦</span><strong>Node insights will appear after connection</strong><p>Connect a cluster to monitor node health and reported CPU, memory, disk, and network usage.</p><div class="empty-fields"><span>Node status <b>—</b></span><span>CPU <b>—</b></span><span>Memory <b>—</b></span><span>Disk <b>—</b></span><span>Network <b>—</b></span></div></div>
         </section>
 
         <section class="section-block" id="replication" aria-labelledby="replication-title">
-          <div class="section-heading"><div><p class="eyebrow">DATA PROTECTION</p><h2 id="replication-title">Replication topology</h2><p class="section-description">View primary and replica relationships and their reported health.</p></div><span class="state-tag state-disconnected">UNAVAILABLE</span></div>
+          <div class="section-heading"><div><p class="eyebrow">DATA PROTECTION</p><h2 id="replication-title">Replication topology</h2><p class="section-description">View live MinIO node reachability and distributed erasure-coded cluster health.</p></div><span class="state-tag state-disconnected replication-status-tag">UNAVAILABLE</span></div>
           <article class="panel replication-panel">
-            <div class="topology" aria-label="Replication topology layout awaiting backend data">
-              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Primary node</strong><small>Waiting for cluster data</small></div>
-              <span class="topology-link" aria-hidden="true"><i></i></span>
-              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Replica 1</strong><small>Waiting for cluster data</small></div>
-              <span class="topology-link" aria-hidden="true"><i></i></span>
-              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Replica 2</strong><small>Waiting for cluster data</small></div>
-              <span class="topology-link" aria-hidden="true"><i></i></span>
-              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Replica 3</strong><small>Waiting for cluster data</small></div>
+            <div class="topology" id="replication-topology" aria-label="MinIO cluster nodes awaiting backend data">
+              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Waiting for cluster data</strong><small>Node health not available</small></div>
             </div>
-            <div class="topology-note"><span class="state-indicator"></span> Topology not yet available <span class="note-separator">·</span> Replica relationships and health will appear when your cluster reports them.</div>
+            <div class="topology-note"><span class="state-indicator"></span><span class="replication-detail">Cluster topology is unavailable while disconnected.</span></div>
           </article>
         </section>
 
         <section class="section-block" id="recovery" aria-labelledby="recovery-title">
-          <div class="section-heading"><div><p class="eyebrow">FAULT TOLERANCE</p><h2 id="recovery-title">Recovery &amp; repair</h2><p class="section-description">Track reported failures, replica repairs, and recovery progress.</p></div><span class="state-tag state-disconnected">NO EVENTS</span></div>
+          <div class="section-heading"><div><p class="eyebrow">FAULT TOLERANCE</p><h2 id="recovery-title">Recovery &amp; repair</h2><p class="section-description">Track node reachability and show repair telemetry only when the storage backend reports it.</p></div><span class="state-tag state-disconnected recovery-status-tag">UNAVAILABLE</span></div>
           <div class="content-grid recovery-grid">
             <article class="panel detail-panel recovery-panel">
-              <div class="panel-heading"><div><p class="eyebrow">RECOVERY WORKFLOW</p><h3>Recovery status</h3></div><span class="state-tag state-disconnected">NOT CONNECTED</span></div>
-              <ol class="recovery-steps">
-                <li><span class="step-marker">1</span><div><strong>Failure detected</strong><small>Waiting for recovery events</small></div></li>
-                <li><span class="step-marker">2</span><div><strong>Replica identified</strong><small>Replica repair source not available</small></div></li>
-                <li><span class="step-marker">3</span><div><strong>Recovery started</strong><small>No recovery progress received</small></div></li>
-                <li><span class="step-marker">4</span><div><strong>Data synchronized</strong><small>Synchronization status unavailable</small></div></li>
-                <li><span class="step-marker">5</span><div><strong>System restored</strong><small>Restoration status unavailable</small></div></li>
+              <div class="panel-heading"><div><p class="eyebrow">LIVE HEALTH</p><h3>Node recovery status</h3></div><span class="state-tag state-disconnected recovery-workflow-tag">UNAVAILABLE</span></div>
+              <ol class="recovery-steps" id="recovery-steps">
+                <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>Waiting for cluster data</small></div></li>
+                <li><span class="step-marker">2</span><div><strong>MinIO repair telemetry</strong><small>Waiting for cluster data</small></div></li>
+                <li><span class="step-marker">3</span><div><strong>Repair event history</strong><small>Waiting for cluster data</small></div></li>
               </ol>
             </article>
-            <article class="panel detail-panel history-panel"><div class="panel-heading"><div><p class="eyebrow">EVENT HISTORY</p><h3>Recovery history</h3></div></div><div class="compact-empty"><span class="empty-icon" aria-hidden="true">↻</span><strong>No recovery events yet</strong><p>Reported repair and recovery events will be listed here after the cluster connects.</p></div></article>
+            <article class="panel detail-panel history-panel"><div class="panel-heading"><div><p class="eyebrow">EVENT HISTORY</p><h3>Recovery history</h3></div></div><div class="compact-empty recovery-history"><span class="empty-icon" aria-hidden="true">↻</span><strong>Waiting for cluster data</strong><p>Recovery events will appear when reported by the storage backend.</p></div></article>
           </div>
         </section>
 
@@ -146,9 +138,9 @@
           </article>
         </section>
 
-        <section class="section-block" aria-labelledby="rebalance-title">
-          <div class="section-heading"><div><p class="eyebrow">DISTRIBUTION</p><h2 id="rebalance-title">Storage rebalancing</h2><p class="section-description">Understand how data placement changes across storage resources.</p></div><span class="state-tag state-disconnected">UNAVAILABLE</span></div>
-          <article class="panel rebalance-panel"><span class="empty-icon large" aria-hidden="true">⇌</span><div><strong>Balance details are not available yet</strong><p>Connect a cluster to see how data is distributed and when rebalancing last occurred.</p></div><div class="rebalance-placeholder"><span>Distribution status <b>—</b></span><span>Last rebalance <b>—</b></span></div></article>
+        <section class="section-block" id="rebalance" aria-labelledby="rebalance-title">
+          <div class="section-heading"><div><p class="eyebrow">DISTRIBUTION</p><h2 id="rebalance-title">Storage rebalancing</h2><p class="section-description">Monitor cluster availability and report rebalance details only when MinIO exposes them.</p></div><span class="state-tag state-disconnected rebalance-status-tag">UNAVAILABLE</span></div>
+          <article class="panel rebalance-panel"><span class="empty-icon large" aria-hidden="true">⇌</span><div><strong class="rebalance-title">Waiting for cluster data</strong><p class="rebalance-detail">Rebalance telemetry is unavailable while disconnected.</p></div><div class="rebalance-placeholder"><span>Reachable nodes <b class="rebalance-nodes">—</b></span><span>Rebalance history <b class="rebalance-history">—</b></span></div></article>
         </section>
 
         <section class="section-block" id="activity" aria-labelledby="activity-title">

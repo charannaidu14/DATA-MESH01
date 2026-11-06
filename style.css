@@ -160,13 +160,10 @@ h3 { font-size: 14px; }
 .empty-fields span, .rebalance-placeholder span { padding: 6px 9px; border: 1px solid rgba(161, 181, 218, .1); border-radius: 7px; color: #8998b3; background: rgba(255,255,255,.025); font-size: 9px; }
 .empty-fields b, .rebalance-placeholder b { margin-left: 8px; color: #d0d9e9; }
 .replication-panel { padding: 27px 24px 16px; }
-.topology { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
-.topology-node { display: flex; width: 22%; min-height: 112px; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(132, 177, 238, .15); border-radius: 11px; background: linear-gradient(145deg, rgba(29, 44, 71, .67), rgba(13, 21, 38, .75)); text-align: center; }
+.topology { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.topology-node { display: flex; min-height: 112px; flex-direction: column; align-items: center; justify-content: center; padding: 10px; border: 1px solid rgba(132, 177, 238, .15); border-radius: 11px; background: linear-gradient(145deg, rgba(29, 44, 71, .67), rgba(13, 21, 38, .75)); text-align: center; }
 .topology-icon { display: grid; width: 31px; height: 31px; place-items: center; margin-bottom: 8px; border: 1px solid rgba(111, 199, 255, .18); border-radius: 9px; color: #8ccef2; background: rgba(93, 158, 213, .1); }
-.topology-node strong { font-size: 10px; }.topology-node small { margin-top: 3px; color: #7988a3; font-size: 8px; }
-.topology-link { position: relative; flex: 1; height: 1px; min-width: 10px; background: linear-gradient(90deg, rgba(110, 203, 241, .35), rgba(152, 144, 255, .33)); }
-.topology-link i { position: absolute; top: -2px; left: 38%; width: 5px; height: 5px; border-radius: 50%; background: #8bdcf4; box-shadow: 0 0 8px #8bdcf4; animation: travel 2.8s ease-in-out infinite; }
-.topology-link:nth-of-type(4) i { animation-delay: .7s; }.topology-link:nth-of-type(6) i { animation-delay: 1.4s; }
+.topology-node strong { max-width: 100%; overflow-wrap: anywhere; font-size: 10px; }.topology-node small { margin-top: 3px; color: #7988a3; font-size: 8px; }
 .topology-note { display: flex; align-items: center; gap: 8px; margin-top: 20px; padding-top: 13px; border-top: 1px solid var(--line); color: #8492ac; font-size: 9px; }
 .topology-note .state-indicator { flex: 0 0 auto; }.note-separator { color: #4f5d77; }
 .recovery-grid { grid-template-columns: 1fr 1fr; }
