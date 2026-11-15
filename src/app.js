@@ -19,8 +19,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend static files from the project root
-const publicDir = path.resolve(__dirname, '..');
+// Serve frontend static files from the project root (after API routes)
 app.use(express.static(publicDir));
 
 // API routes
