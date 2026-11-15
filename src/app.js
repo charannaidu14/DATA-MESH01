@@ -9,6 +9,12 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Request logger for debugging
+app.use((req, res, next) => {
+  console.log(`[REQ] ${req.method} ${req.path}`);
+  next();
+});
+
 // Standard middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
