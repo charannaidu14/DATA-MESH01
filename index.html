@@ -206,7 +206,7 @@
         </section>
 
         <!-- Storage Nodes & Fault Injection -->
-        <section class="section-block" id="nodes" aria-labelledby="nodes-title">
+        <section class="section-block nodes-section" id="nodes" aria-labelledby="nodes-title">
           <div class="section-heading">
             <div>
               <p class="eyebrow">FAULT TOLERANCE &amp; INFRASTRUCTURE</p>
@@ -214,6 +214,14 @@
               <p class="section-description">Test cluster resilience by simulating node failures. The system automatically preserves quorum and reads from remaining healthy replicas.</p>
             </div>
             <span class="state-tag state-real node-health-tag">4/4 HEALTHY</span>
+          </div>
+          <!-- Quorum bar -->
+          <div class="quorum-bar">
+            <div class="quorum-segment active" data-node="1"></div>
+            <div class="quorum-segment active" data-node="2"></div>
+            <div class="quorum-segment active" data-node="3"></div>
+            <div class="quorum-segment active" data-node="4"></div>
+            <span class="quorum-label">QUORUM INTEGRITY</span>
           </div>
           <div class="nodes-container" id="nodes-grid">
             <!-- Rendered dynamically by app.js -->
@@ -337,6 +345,16 @@
       </footer>
     </div>
   </div>
+
+  <!-- SVG gradient definitions for node arcs -->
+  <svg width="0" height="0" style="position:absolute;" aria-hidden="true">
+    <defs>
+      <linearGradient id="arc-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00e5ff"/>
+        <stop offset="100%" stop-color="#a855f7"/>
+      </linearGradient>
+    </defs>
+  </svg>
 
   <!-- Toast notification banner -->
   <div class="toast-container" id="toast-container"></div>

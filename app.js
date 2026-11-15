@@ -179,52 +179,88 @@ function renderNodes(nodes) {
   const healthyCount = nodes.filter(n => n.status === 'healthy').length;
   setStatusTag(nodeHealthTag, healthyCount === nodes.length ? 'real' : healthyCount >= 2 ? 'empty' : 'error', `${healthyCount}/${nodes.length} HEALTHY`);
 
-  container.innerHTML = nodes.map(node => {
+  container.innerHTML = nodes.map((node, idx) => {
     const isOnline = node.status === 'healthy';
+    const glowColors = [
+      ['#00e5ff','#006aff'],
+      ['#a855f7','#6366f1'],
+      ['#00ffb3','#0ea5e9'],
+      ['#ff6b6b','#f59e0b']
+    ];
+    const [c1, c2] = glowColors[idx % glowColors.length];
+    const usagePercent = node.capacityBytes > 0
+      ? ((node.usedBytes / node.capacityBytes) * 100).toFixed(1)
+      : '0';
     return `
-      <article class="node-card ${isOnline ? '' : 'offline'}">
+      <article class="node-card ${isOnline ? '' : 'offline'}" style="--glow-1:${c1};--glow-2:${c2};">
+        <!-- Decorative scan line -->
+        <div class="node-scanline" aria-hidden="true"></div>
+
         <div class="node-card-header">
+          <div class="node-avatar ${isOnline ? 'online' : 'offline'}" aria-hidden="true">
+            <span class="avatar-ring"></span>
+            <span class="avatar-core">${idx + 1}</span>
+          </div>
           <div class="node-title-group">
             <h3>${escapeHtml(node.name)}</h3>
             <small>${escapeHtml(node.endpoint)}</small>
           </div>
           <span class="node-pill ${isOnline ? 'online' : 'offline'}">
-            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isOnline ? '#10b981' : '#ef4444'};"></span>
+            <span class="pill-dot"></span>
             ${isOnline ? 'ONLINE' : 'OFFLINE'}
           </span>
+        </div>
+
+        <!-- Usage arc -->
+        <div class="node-usage-arc">
+          <svg viewBox="0 0 80 80" class="arc-svg" aria-hidden="true">
+            <circle cx="40" cy="40" r="34" class="arc-track"/>
+            <circle cx="40" cy="40" r="34" class="arc-fill" style="--pct:${usagePercent};" />
+          </svg>
+          <span class="arc-label">${usagePercent}%</span>
+          <small class="arc-caption">CAPACITY</small>
         </div>
 
         <div class="node-metrics-grid">
           <div class="node-metric-item">
             <span>CPU</span>
             <strong>${escapeHtml(node.cpu || '0.2%')}</strong>
+            <div class="metric-bar"><div class="metric-bar-fill" style="width:${parseFloat(node.cpu || '0.2')}%;"></div></div>
           </div>
           <div class="node-metric-item">
-            <span>Memory</span>
+            <span>MEM</span>
             <strong>${escapeHtml(node.memory || '1.1%')}</strong>
+            <div class="metric-bar"><div class="metric-bar-fill" style="width:${parseFloat(node.memory || '1.1')}%;"></div></div>
           </div>
           <div class="node-metric-item">
-            <span>Used Space</span>
+            <span>USED</span>
             <strong>${escapeHtml(node.usedCapacity || '0 B')}</strong>
           </div>
           <div class="node-metric-item">
-            <span>Replicas</span>
-            <strong>${node.replicaCount || 0} objects</strong>
+            <span>REPLICAS</span>
+            <strong>${node.replicaCount || 0} obj</strong>
           </div>
         </div>
 
         <div class="node-card-actions">
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn-node-toggle ${isOnline ? 'btn-fail' : 'btn-restore'}"
             data-node-id="${escapeHtml(node.id)}"
           >
-            ${isOnline ? '⚡ Simulate Outage (Fail Node)' : '✔ Restore Node (Bring Online)'}
+            ${isOnline ? '⚡ Simulate Outage' : '✔ Restore Node'}
           </button>
         </div>
       </article>
     `;
   }).join('');
+
+  // Update quorum bar
+  document.querySelectorAll('.quorum-segment').forEach((seg, i) => {
+    const isUp = nodes[i] && nodes[i].status === 'healthy';
+    seg.classList.toggle('active', isUp);
+    seg.classList.toggle('down', !isUp);
+  });
 
   // Attach node toggle handlers
   container.querySelectorAll('.btn-node-toggle').forEach(btn => {
