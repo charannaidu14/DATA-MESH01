@@ -45,7 +45,10 @@ let availabilityObservedMs = 0;
 let availabilityHealthyMs = 0;
 const previousBlockIo = new Map();
 
-function buildDisconnectedDashboard() {
+function buildDisconnectedDashboard(recoveryNodes = []) {
+  const healthyNodeCount = recoveryNodes.filter(node => node.status === 'healthy').length;
+  const hasNodeHealth = recoveryNodes.length > 0;
+
   return {
     connected: false,
     overview: {
@@ -76,11 +79,15 @@ function buildDisconnectedDashboard() {
       detail: 'Replication status is unavailable while the storage cluster is disconnected.'
     },
     recovery: {
-      status: 'unavailable',
-      healthyNodes: 0,
-      totalNodes: MINIO_NODE_ENDPOINTS.length,
-      events: [],
-      detail: 'Recovery monitoring is unavailable while the storage cluster is disconnected.'
+      status: hasNodeHealth
+        ? healthyNodeCount === recoveryNodes.length ? 'healthy' : 'attention'
+        : 'unavailable',
+      healthyNodes: healthyNodeCount,
+      totalNodes: recoveryNodes.length || MINIO_NODE_ENDPOINTS.length,
+      events: recoveryEvents,
+      detail: hasNodeHealth
+        ? `${healthyNodeCount} of ${recoveryNodes.length} configured storage nodes are reachable. Recovery history records observed node health changes; MinIO healing-job details are not exposed through the S3 API.`
+        : 'Node reachability is unavailable. Recovery history records observed node health changes; MinIO healing-job details are not exposed through the S3 API.'
     },
     rebalance: {
       status: 'unavailable',
@@ -401,6 +408,15 @@ function recordNodeHealthChanges(nodes) {
   recoveryEvents.splice(20);
 }
 
+async function getNodeHealth() {
+  return Promise.all(MINIO_NODE_ENDPOINTS.map(async endpoint => ({
+    name: endpoint,
+    status: await checkMinioHealth(endpoint, '/minio/health/live')
+      ? 'healthy'
+      : 'unavailable'
+  })));
+}
+
 function listBucketObjects() {
   const objects = [];
   const stream = minioClient.listObjects(BUCKET_NAME, '', true);
@@ -506,9 +522,14 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/dashboard', async (req, res) => {
+  let recoveryNodes = [];
+
   try {
+    recoveryNodes = await getNodeHealth();
+    recordNodeHealthChanges(recoveryNodes);
+
     if (!await ensureBucket()) {
-      return res.json(buildDisconnectedDashboard());
+      return res.json(buildDisconnectedDashboard(recoveryNodes));
     }
 
     await minioClient.listBuckets();
@@ -534,12 +555,10 @@ app.get('/api/dashboard', async (req, res) => {
       console.warn('Docker node metrics unavailable:', message);
     }
 
-    const nodes = await Promise.all(MINIO_NODE_ENDPOINTS.map(async endpoint => {
-      const healthy = await checkMinioHealth(endpoint, '/minio/health/live');
-      const stats = getNodeStats(endpoint, dockerStats);
+    const nodes = await Promise.all(recoveryNodes.map(async node => {
+      const stats = getNodeStats(node.name, dockerStats);
       return {
-        name: endpoint,
-        status: healthy ? 'healthy' : 'unavailable',
+        ...node,
         cpu: stats ? stats.cpu : null,
         memory: stats ? stats.memory : null,
         disk: stats ? stats.disk : null,
@@ -553,7 +572,6 @@ app.get('/api/dashboard', async (req, res) => {
         availableCapacity: stats ? formatBytes(stats.availableBytes) : null
       };
     }));
-    recordNodeHealthChanges(nodes);
     const healthyNodeCount = nodes.filter(node => node.status === 'healthy').length;
     const clusterResponding = await checkMinioHealth(
       `${MINIO_ENDPOINT}:${MINIO_PORT}`,
@@ -629,7 +647,7 @@ app.get('/api/dashboard', async (req, res) => {
     broadcastDashboardUpdate(dashboard);
     res.json(dashboard);
   } catch (err) {
-    const disconnectedDashboard = buildDisconnectedDashboard();
+    const disconnectedDashboard = buildDisconnectedDashboard(recoveryNodes);
     const message = err && err.message ? err.message : String(err || 'Unknown dashboard error');
     console.warn('Dashboard unavailable:', message);
     res.json(disconnectedDashboard);
@@ -700,6 +718,18 @@ wsServer.on('connection', socket => {
   socket.on('close', () => {
     dashboardSubscribers.delete(socket);
   });
+});
+
+wsServer.on('error', error => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(
+      `Port ${PORT} is already in use. DATA MESH may already be running at http://localhost:${PORT}. ` +
+      `To use another port in PowerShell, run: $env:PORT=3001; npm start`
+    );
+  } else {
+    console.error('WebSocket server error:', error);
+  }
+  process.exitCode = 1;
 });
 
 httpServer.listen(PORT, async () => {

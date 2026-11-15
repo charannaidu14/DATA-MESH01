@@ -386,7 +386,7 @@ function renderRecovery(recovery) {
   const steps = document.querySelector('#recovery-steps');
   const history = document.querySelector('.recovery-history');
 
-  if (!dashboardState.connected || !recovery) {
+  if (!recovery) {
     setStatusTag(recoveryTag, 'disconnected', 'UNAVAILABLE');
     setStatusTag(recoveryWorkflowTag, 'disconnected', 'UNAVAILABLE');
     steps.innerHTML = `
@@ -398,13 +398,22 @@ function renderRecovery(recovery) {
     return;
   }
 
+  const healthAvailable = recovery.status !== 'unavailable';
   const healthy = recovery.status === 'healthy';
-  const status = healthy ? 'real' : 'error';
-  const label = healthy ? 'NO FAILURES DETECTED' : 'ATTENTION REQUIRED';
+  const status = !healthAvailable ? 'disconnected' : healthy ? 'real' : 'error';
+  const label = !healthAvailable
+    ? 'UNAVAILABLE'
+    : healthy
+      ? 'NO FAILURES DETECTED'
+      : 'ATTENTION REQUIRED';
   setStatusTag(recoveryTag, status, label);
-  setStatusTag(recoveryWorkflowTag, status, healthy ? 'NODES HEALTHY' : 'NODE FAILURE DETECTED');
+  setStatusTag(
+    recoveryWorkflowTag,
+    status,
+    !healthAvailable ? 'UNAVAILABLE' : healthy ? 'NODES HEALTHY' : 'NODE FAILURE DETECTED'
+  );
   steps.innerHTML = `
-    <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>${recovery.healthyNodes} of ${recovery.totalNodes} nodes healthy</small></div></li>
+    <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>${healthAvailable ? `${recovery.healthyNodes} of ${recovery.totalNodes} nodes healthy` : 'Unavailable'}</small></div></li>
     <li><span class="step-marker">2</span><div><strong>MinIO repair telemetry</strong><small>Not exposed by the S3 API</small></div></li>
     <li><span class="step-marker">3</span><div><strong>Observed node health changes</strong><small>${recovery.events?.length || 0} event(s) recorded this session</small></div></li>
   `;
@@ -417,7 +426,7 @@ function renderRecovery(recovery) {
         <span>${escapeHtml(event.message)}</span>
       </div>
     `).join('')
-    : `<span class="empty-icon" aria-hidden="true">↻</span><strong>${healthy ? 'No node health changes observed' : 'Node failure detected'}</strong><p>${escapeHtml(recovery.detail)}</p>`;
+    : `<span class="empty-icon" aria-hidden="true">↻</span><strong>${healthy ? 'No node health changes observed' : healthAvailable ? 'Node failure detected' : 'Recovery monitoring unavailable'}</strong><p>${escapeHtml(recovery.detail)}</p>`;
 }
 
 function renderRebalance(rebalance) {
