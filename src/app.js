@@ -30,6 +30,9 @@ app.use('/api/objects', objectsRoutes);
 app.use('/api/nodes', nodesRoutes);
 app.use('/api/integrity', integrityRoutes);
 
+// Serve static frontend files (after API routes)
+app.use(express.static(publicDir));
+
 // SPA fallback for HTML5 navigation
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/ws')) {
