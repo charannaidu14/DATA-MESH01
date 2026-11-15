@@ -319,3 +319,282 @@ h3 { font-size: 14px; }
   border-color: rgba(117, 227, 255, .6);
   box-shadow: 0 0 0 3px rgba(117, 227, 255, .1);
 }
+
+/* Enhanced Interactive Elements */
+.quick-actions-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+.button-secondary {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.button-repair-all {
+  color: #06121d;
+  background: linear-gradient(110deg, #65e4bc, #75e3ff);
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(101, 228, 188, 0.3);
+  transition: all .2s ease;
+}
+.button-repair-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(101, 228, 188, 0.45);
+}
+
+/* Nodes Grid */
+.nodes-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.node-card {
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(16, 27, 48, 0.75);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all .25s ease;
+}
+.node-card.offline {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(35, 15, 20, 0.6);
+}
+.node-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.node-title-group h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.node-title-group small {
+  color: var(--muted);
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+}
+.node-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.node-pill.online {
+  color: #65e4bc;
+  background: rgba(101, 228, 188, 0.12);
+  border: 1px solid rgba(101, 228, 188, 0.3);
+}
+.node-pill.offline {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.node-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+}
+.node-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.node-metric-item span {
+  font-size: 10px;
+  color: #7e8da8;
+  text-transform: uppercase;
+}
+.node-metric-item strong {
+  font-size: 12px;
+  color: #e2e8f0;
+}
+.node-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+.btn-node-toggle {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
+  border: 1px solid transparent;
+}
+.btn-fail {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.btn-fail:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+}
+.btn-restore {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.btn-restore:hover {
+  background: rgba(16, 185, 129, 0.35);
+  color: #fff;
+}
+
+/* Object Table Actions */
+.table-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.action-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s ease;
+}
+.action-btn.btn-download {
+  background: rgba(117, 227, 255, 0.15);
+  color: #75e3ff;
+  border-color: rgba(117, 227, 255, 0.3);
+}
+.action-btn.btn-download:hover {
+  background: rgba(117, 227, 255, 0.3);
+  color: #fff;
+}
+.action-btn.btn-corrupt {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.action-btn.btn-corrupt:hover {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fff;
+}
+.action-btn.btn-delete {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.action-btn.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+}
+.replica-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(168, 139, 255, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(168, 139, 255, 0.3);
+}
+.status-pill {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.status-pill.status-available {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+.status-pill.status-degraded {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+.status-pill.status-offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+/* Verification Controls & Breakdown */
+.verification-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+.integrity-breakdown {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--line);
+}
+.integrity-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+}
+.integrity-item-row:last-child {
+  border-bottom: none;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 400px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: rgba(14, 23, 42, 0.95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toast-in .25s ease;
+  transition: all .2s ease;
+}
+.toast.success { border-color: rgba(16, 185, 129, 0.5); }
+.toast.error { border-color: rgba(239, 68, 68, 0.5); }
+.toast.warning { border-color: rgba(245, 158, 11, 0.5); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

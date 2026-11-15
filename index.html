@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#071322">
-  <meta name="description" content="DATA MESH — distributed object storage management, designed for resilience and ready for live infrastructure data.">
-  <title>DATA MESH — Storage Operations</title>
+  <meta name="description" content="DATA MESH — Fault-tolerant distributed object storage management with replication, live fault injection, and auto-repair.">
+  <title>DATA MESH — Distributed Storage Operations</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,26 +20,38 @@
       <nav class="side-nav">
         <a class="side-link active" href="#dashboard" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span>Dashboard</a>
         <a class="side-link" href="#storage"><span class="nav-icon" aria-hidden="true">▤</span>Storage</a>
-        <a class="side-link" href="#nodes"><span class="nav-icon" aria-hidden="true">▦</span>Nodes</a>
-        <a class="side-link" href="#replication"><span class="nav-icon" aria-hidden="true">⤧</span>Replication</a>
-        <a class="side-link" href="#recovery"><span class="nav-icon" aria-hidden="true">↻</span>Recovery</a>
-        <a class="side-link" href="#integrity"><span class="nav-icon" aria-hidden="true">◇</span>Data integrity</a>
-        <a class="side-link" href="#activity"><span class="nav-icon" aria-hidden="true">≡</span>Activity logs</a>
+        <a class="side-link" href="#nodes"><span class="nav-icon" aria-hidden="true">▦</span>Storage Nodes</a>
+        <a class="side-link" href="#replication"><span class="nav-icon" aria-hidden="true">⤧</span>Replication Mesh</a>
+        <a class="side-link" href="#recovery"><span class="nav-icon" aria-hidden="true">↻</span>Recovery &amp; Healing</a>
+        <a class="side-link" href="#integrity"><span class="nav-icon" aria-hidden="true">◇</span>Data Integrity</a>
+        <a class="side-link" href="#activity"><span class="nav-icon" aria-hidden="true">≡</span>Activity Logs</a>
       </nav>
 
       <div class="sidebar-bottom">
-        <div class="sidebar-note"><span class="note-icon" aria-hidden="true">i</span><div><strong>New to DATA MESH?</strong><p>Connect a storage cluster to start monitoring your infrastructure.</p></div></div>
-        <div class="profile"><span class="profile-mark" aria-hidden="true">DM</span><span><strong>Workspace</strong><small>Cluster not connected</small></span><span class="profile-menu" aria-hidden="true">···</span></div>
+        <div class="sidebar-note">
+          <span class="note-icon" aria-hidden="true">i</span>
+          <div>
+            <strong>Fault-Tolerant Vault</strong>
+            <p>Simulate node crashes and watch the cluster heal and recover replicas automatically.</p>
+          </div>
+        </div>
+        <div class="profile">
+          <span class="profile-mark" aria-hidden="true">DM</span>
+          <span><strong>Mesh Cluster</strong><small class="cluster-mesh-status">4 Nodes Active</small></span>
+          <span class="profile-menu" aria-hidden="true">···</span>
+        </div>
       </div>
     </aside>
 
     <div class="main-column">
       <header class="topbar">
-        <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong>Dashboard</strong></div>
+        <div class="breadcrumb">
+          <span>Workspace</span><span class="breadcrumb-slash">/</span><strong>Distributed Storage Operations</strong>
+        </div>
         <a class="topbar-brand" href="#dashboard" aria-label="DATA MESH home"><span>DATA<span class="brand-accent">MESH</span></span></a>
         <div class="topbar-actions">
-          <span class="connection-badge"><i aria-hidden="true"></i> Disconnected</span>
-          <button class="icon-button" type="button" aria-label="Notifications" disabled><span aria-hidden="true">♧</span></button>
+          <button class="button button-repair-all" id="quick-repair-btn" type="button">⚡ Heal &amp; Rebalance</button>
+          <span class="connection-badge"><i aria-hidden="true"></i> Cluster Active</span>
           <span class="top-avatar" aria-label="Workspace account">DM</span>
         </div>
       </header>
@@ -47,125 +59,288 @@
       <main id="dashboard">
         <section class="welcome-section" aria-labelledby="welcome-title">
           <div>
-            <p class="eyebrow">DISTRIBUTED STORAGE OPERATIONS</p>
+            <p class="eyebrow">DISTRIBUTED OBJECT STORAGE CLUSTER</p>
             <h1 id="welcome-title">DATA MESH</h1>
-            <p class="welcome-copy">Your storage infrastructure, in one clear view. Track capacity, objects, node health, replication, and recovery as your cluster reports them.</p>
+            <p class="welcome-copy">Fault-tolerant distributed object storage operations. Store, replicate, verify, and auto-repair data across independently failing storage nodes.</p>
           </div>
-          <a class="button button-primary" href="#connect"><span aria-hidden="true">↗</span> View connection status</a>
+          <div class="quick-actions-bar">
+            <a class="button button-primary" href="#storage"><span aria-hidden="true">↑</span> Upload New Object</a>
+            <a class="button button-muted" href="#nodes"><span aria-hidden="true">▦</span> Manage Nodes &amp; Faults</a>
+            <a class="button button-muted" href="#integrity"><span aria-hidden="true">◇</span> Check Integrity</a>
+          </div>
         </section>
 
         <section class="connection-banner" id="connect" aria-label="Cluster connection status">
-          <span class="banner-symbol" aria-hidden="true">↗</span>
-          <div class="banner-copy"><strong>Your workspace is ready to connect</strong><p>Connect a storage cluster to see live capacity, node health, and activity. Until then, metrics remain blank—no sample data is shown.</p></div>
-          <span class="state-tag state-disconnected">DISCONNECTED</span>
+          <span class="banner-symbol" aria-hidden="true">⚡</span>
+          <div class="banner-copy">
+            <strong id="banner-title">Distributed 4-Node Mesh Active</strong>
+            <p id="banner-description">Storage replication, fault injection, and self-healing engine operational across 4 virtual storage nodes.</p>
+          </div>
+          <span class="state-tag state-real banner-tag">ACTIVE CLUSTER</span>
         </section>
 
+        <!-- System Overview Metrics Grid -->
         <section class="section-block" aria-labelledby="overview-title">
           <div class="section-heading">
             <div><p class="eyebrow">AT A GLANCE</p><h2 id="overview-title">System overview</h2></div>
-            <span class="section-meta"><span class="state-indicator"></span> Metrics appear after connection</span>
+            <span class="section-meta"><span class="state-indicator online"></span> Live Cluster Telemetry</span>
           </div>
           <div class="metric-grid">
-            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Storage capacity</span><span class="metric-icon" aria-hidden="true">▤</span></div><strong class="metric-value">—</strong><span class="metric-caption">Docker volume capacity is not reported yet</span><span class="metric-foot">Filesystem on the first reporting MinIO node</span></article>
-            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Available storage</span><span class="metric-icon" aria-hidden="true">◫</span></div><strong class="metric-value">—</strong><span class="metric-caption">Docker volume free space is not reported yet</span><span class="metric-foot">Not an aggregate cluster quota</span></article>
-            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Node health</span><span class="metric-icon" aria-hidden="true">▦</span></div><strong class="metric-value">—</strong><span class="metric-caption">Node status is not reported yet</span><span class="metric-foot">Healthy nodes compared with connected nodes</span></article>
-            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Cluster readiness</span><span class="metric-icon" aria-hidden="true">⤧</span></div><strong class="metric-value">—</strong><span class="metric-caption">Cluster readiness is not reported yet</span><span class="metric-foot">Health endpoint and configured node status</span></article>
-            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Observed availability</span><span class="metric-icon" aria-hidden="true">◷</span></div><strong class="metric-value">—</strong><span class="metric-caption">Collecting health samples</span><span class="metric-foot">Observed since this server started</span></article>
-            <article class="panel metric-card" data-state="disconnected"><div class="metric-heading"><span>Container disk I/O</span><span class="metric-icon" aria-hidden="true">⌁</span></div><strong class="metric-value">—</strong><span class="metric-caption">Sampling MinIO container disk I/O</span><span class="metric-foot">Aggregated read/write rate from Docker stats</span></article>
+            <article class="panel metric-card" data-state="real">
+              <div class="metric-heading"><span>Storage capacity</span><span class="metric-icon" aria-hidden="true">▤</span></div>
+              <strong class="metric-value">—</strong>
+              <span class="metric-caption">Aggregate cluster capacity</span>
+              <span class="metric-foot">Combined capacity of 4 storage nodes</span>
+            </article>
+            <article class="panel metric-card" data-state="real">
+              <div class="metric-heading"><span>Available storage</span><span class="metric-icon" aria-hidden="true">◫</span></div>
+              <strong class="metric-value">—</strong>
+              <span class="metric-caption">Free cluster space</span>
+              <span class="metric-foot">Available for replication</span>
+            </article>
+            <article class="panel metric-card" data-state="real">
+              <div class="metric-heading"><span>Node health</span><span class="metric-icon" aria-hidden="true">▦</span></div>
+              <strong class="metric-value">—</strong>
+              <span class="metric-caption">Active / Total nodes</span>
+              <span class="metric-foot">Healthy storage nodes</span>
+            </article>
+            <article class="panel metric-card" data-state="real">
+              <div class="metric-heading"><span>Cluster readiness</span><span class="metric-icon" aria-hidden="true">⤧</span></div>
+              <strong class="metric-value">—</strong>
+              <span class="metric-caption">Replication health</span>
+              <span class="metric-foot">Quorum state &amp; erasure mesh</span>
+            </article>
+            <article class="panel metric-card" data-state="real">
+              <div class="metric-heading"><span>Observed availability</span><span class="metric-icon" aria-hidden="true">◷</span></div>
+              <strong class="metric-value">—</strong>
+              <span class="metric-caption">Uptime SLA observed</span>
+              <span class="metric-foot">Measured since server started</span>
+            </article>
+            <article class="panel metric-card" data-state="real">
+              <div class="metric-heading"><span>Storage throughput</span><span class="metric-icon" aria-hidden="true">⌁</span></div>
+              <strong class="metric-value">—</strong>
+              <span class="metric-caption">Cluster I/O transfer rate</span>
+              <span class="metric-foot">Real-time replication throughput</span>
+            </article>
           </div>
         </section>
 
+        <!-- Storage & Upload -->
         <section class="content-grid section-block" id="storage" aria-label="Storage capacity and objects">
-          <article class="panel detail-panel capacity-panel" data-state="disconnected">
-            <div class="panel-heading"><div><p class="eyebrow">CAPACITY</p><h3>Storage volume usage</h3></div><span class="state-tag state-disconnected capacity-status-tag">NO DATA</span></div>
-            <div class="usage-visual"><div class="usage-ring" aria-hidden="true"><span>—</span></div><div class="usage-summary"><strong class="capacity-summary-title">Capacity details will appear here</strong><p class="capacity-summary-detail">Connect Docker-backed storage to read the MinIO data volume filesystem.</p><span class="muted-label">Used <b class="capacity-used">—</b></span><span class="muted-label">Available <b class="capacity-available">—</b></span></div></div>
-            <div class="empty-inline capacity-note"><span class="empty-icon" aria-hidden="true">i</span><span>Capacity data is unavailable until a Docker-backed MinIO volume reports it.</span></div>
+          <article class="panel detail-panel capacity-panel" data-state="real">
+            <div class="panel-heading">
+              <div><p class="eyebrow">CAPACITY</p><h3>Storage volume usage</h3></div>
+              <span class="state-tag state-real capacity-status-tag">NORMAL</span>
+            </div>
+            <div class="usage-visual">
+              <div class="usage-ring" aria-hidden="true"><span>—</span></div>
+              <div class="usage-summary">
+                <strong class="capacity-summary-title">Distributed storage mesh</strong>
+                <p class="capacity-summary-detail">Total data distributed across nodes.</p>
+                <span class="muted-label">Used <b class="capacity-used">—</b></span>
+                <span class="muted-label">Available <b class="capacity-available">—</b></span>
+              </div>
+            </div>
+            <div class="empty-inline capacity-note">
+              <span class="empty-icon" aria-hidden="true">i</span>
+              <span>Replication factor: 3x redundancy per object across storage nodes.</span>
+            </div>
           </article>
 
           <article class="panel detail-panel upload-panel">
-            <div class="panel-heading"><div><p class="eyebrow">OBJECT STORAGE</p><h3>Upload objects</h3></div><span class="state-tag state-disabled upload-status-tag">INACTIVE</span></div>
-            <div class="upload-zone" aria-label="Upload objects to connected storage"><span class="upload-icon" aria-hidden="true">↑</span><strong>Connect a cluster to upload objects</strong><p aria-live="polite">Once connected, upload support depends on the capabilities of your storage backend.</p><button class="button button-muted" type="button" disabled>Select files</button><input class="object-upload-input" type="file" hidden disabled></div>
+            <div class="panel-heading">
+              <div><p class="eyebrow">OBJECT STORAGE</p><h3>Upload objects</h3></div>
+              <span class="state-tag state-real upload-status-tag">READY</span>
+            </div>
+            <div class="upload-zone" id="drop-zone" aria-label="Upload objects to distributed storage">
+              <span class="upload-icon" aria-hidden="true">↑</span>
+              <strong>Drag &amp; drop files here to replicate</strong>
+              <p aria-live="polite" class="upload-status-text">Select files to upload and replicate automatically across healthy nodes.</p>
+              <button class="button button-primary upload-trigger-btn" type="button">Select files</button>
+              <input class="object-upload-input" type="file" hidden>
+            </div>
           </article>
         </section>
 
-        <section class="section-block" aria-labelledby="objects-title">
-          <div class="section-heading"><div><p class="eyebrow">OBJECT BROWSER</p><h2 id="objects-title">Objects</h2></div><span class="section-meta object-section-meta">Connect a cluster to browse objects</span></div>
+        <!-- Object Browser Table -->
+        <section class="section-block" id="objects" aria-labelledby="objects-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">OBJECT BROWSER</p>
+              <h2 id="objects-title">Stored objects</h2>
+              <p class="section-description">Objects stored with SHA-256 metadata and distributed across available nodes. Download, test corruption, or delete anytime.</p>
+            </div>
+            <span class="section-meta object-section-meta">Loading objects...</span>
+          </div>
           <div class="panel table-panel">
-            <div class="table-toolbar"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search objects" placeholder="Search objects" disabled></label><label class="filter-button">Filter <select class="filter-select" aria-label="Filter objects" disabled><option value="all">All objects</option><option value="large">Over 1 MB</option><option value="recent">Modified in 7 days</option></select></label></div>
+            <div class="table-toolbar">
+              <label class="search-box">
+                <span aria-hidden="true">⌕</span>
+                <input type="search" aria-label="Search objects" placeholder="Search objects...">
+              </label>
+              <label class="filter-button">
+                Filter
+                <select class="filter-select" aria-label="Filter objects">
+                  <option value="all">All objects</option>
+                  <option value="large">Over 1 MB</option>
+                  <option value="recent">Modified recently</option>
+                </select>
+              </label>
+            </div>
             <div class="data-table" role="table" aria-label="Object list">
-              <div class="table-row table-header" role="row"><span role="columnheader">OBJECT NAME</span><span role="columnheader">SIZE</span><span role="columnheader">LAST MODIFIED</span><span role="columnheader">STATUS</span></div>
-              <div class="table-empty" role="row"><span class="empty-icon large" aria-hidden="true">▤</span><strong>Your object list is waiting for a connection</strong><p>Connect a storage cluster to browse, search, and review stored objects.</p><span class="state-tag state-disconnected">DISCONNECTED</span></div>
+              <div class="table-row table-header" role="row">
+                <span>OBJECT NAME</span>
+                <span>SIZE</span>
+                <span>REPLICAS</span>
+                <span>LAST MODIFIED</span>
+                <span>STATUS</span>
+                <span style="text-align: right;">ACTIONS</span>
+              </div>
+              <div class="table-empty" role="row">
+                <span class="empty-icon large" aria-hidden="true">▤</span>
+                <strong>No objects stored yet</strong>
+                <p>Upload a file using the upload zone above to replicate it across the cluster.</p>
+              </div>
             </div>
           </div>
         </section>
 
+        <!-- Storage Nodes & Fault Injection -->
         <section class="section-block" id="nodes" aria-labelledby="nodes-title">
-          <div class="section-heading"><div><p class="eyebrow">INFRASTRUCTURE</p><h2 id="nodes-title">Storage nodes</h2><p class="section-description">Node reachability comes from MinIO health checks. CPU and memory are live Docker container percentages; disk and network show cumulative I/O since each container started.</p></div><span class="state-tag state-disconnected node-health-tag">NO DATA</span></div>
-          <div class="panel empty-state"><span class="empty-icon large" aria-hidden="true">▦</span><strong>Node insights will appear after connection</strong><p>Connect Docker-backed MinIO nodes to view reachability, CPU, memory, disk I/O, and network I/O.</p><div class="empty-fields"><span>Node status <b>—</b></span><span>CPU <b>—</b></span><span>Memory <b>—</b></span><span>Disk I/O <b>—</b></span><span>Network I/O <b>—</b></span></div></div>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">FAULT TOLERANCE &amp; INFRASTRUCTURE</p>
+              <h2 id="nodes-title">Storage nodes</h2>
+              <p class="section-description">Test cluster resilience by simulating node failures. The system automatically preserves quorum and reads from remaining healthy replicas.</p>
+            </div>
+            <span class="state-tag state-real node-health-tag">4/4 HEALTHY</span>
+          </div>
+          <div class="nodes-container" id="nodes-grid">
+            <!-- Rendered dynamically by app.js -->
+          </div>
         </section>
 
+        <!-- Replication Topology -->
         <section class="section-block" id="replication" aria-labelledby="replication-title">
-          <div class="section-heading">          <div><p class="eyebrow">DATA PROTECTION</p><h2 id="replication-title">Replication topology</h2><p class="section-description">View live MinIO node reachability and distributed erasure-coded cluster readiness.</p></div><span class="state-tag state-disconnected replication-status-tag">UNAVAILABLE</span></div>
-          <article class="panel replication-panel">
-            <div class="topology" id="replication-topology" aria-label="MinIO cluster nodes awaiting backend data">
-              <div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Waiting for cluster data</strong><small>Node health not available</small></div>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">DATA PROTECTION</p>
+              <h2 id="replication-title">Replication topology</h2>
+              <p class="section-description">Distributed 3x replica placement across independent storage nodes.</p>
             </div>
-            <div class="topology-note"><span class="state-indicator"></span><span class="replication-detail">Cluster topology is unavailable while disconnected.</span></div>
+            <span class="state-tag state-real replication-status-tag">CLUSTER READY</span>
+          </div>
+          <article class="panel replication-panel">
+            <div class="topology" id="replication-topology" aria-label="Cluster nodes replication map">
+              <!-- Rendered dynamically -->
+            </div>
+            <div class="topology-note">
+              <span class="state-indicator online"></span>
+              <span class="replication-detail">Replication active. 3x replication factor enforced.</span>
+            </div>
           </article>
         </section>
 
+        <!-- Recovery & Self-Healing -->
         <section class="section-block" id="recovery" aria-labelledby="recovery-title">
-          <div class="section-heading"><div><p class="eyebrow">FAULT TOLERANCE</p><h2 id="recovery-title">Recovery &amp; repair</h2><p class="section-description">Track node reachability and show repair telemetry only when the storage backend reports it.</p></div><span class="state-tag state-disconnected recovery-status-tag">UNAVAILABLE</span></div>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">RESILIENCE PIPELINE</p>
+              <h2 id="recovery-title">Recovery &amp; self-healing</h2>
+              <p class="section-description">Observe automatic healing pipelines and failure event history.</p>
+            </div>
+            <span class="state-tag state-real recovery-status-tag">NO FAILURES</span>
+          </div>
           <div class="content-grid recovery-grid">
             <article class="panel detail-panel recovery-panel">
-              <div class="panel-heading"><div><p class="eyebrow">LIVE HEALTH</p><h3>Node recovery status</h3></div><span class="state-tag state-disconnected recovery-workflow-tag">UNAVAILABLE</span></div>
+              <div class="panel-heading">
+                <div><p class="eyebrow">HEALING PIPELINE</p><h3>Recovery workflow</h3></div>
+                <span class="state-tag state-real recovery-workflow-tag">HEALTHY</span>
+              </div>
               <ol class="recovery-steps" id="recovery-steps">
-                <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>Waiting for cluster data</small></div></li>
-                <li><span class="step-marker">2</span><div><strong>MinIO repair telemetry</strong><small>Waiting for cluster data</small></div></li>
-                <li><span class="step-marker">3</span><div><strong>Repair event history</strong><small>Waiting for cluster data</small></div></li>
+                <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>Continuous health probe</small></div></li>
+                <li><span class="step-marker">2</span><div><strong>Replica quorum check</strong><small>Verifying 3x replicas</small></div></li>
+                <li><span class="step-marker">3</span><div><strong>Self-healing engine</strong><small>Active rebalancing</small></div></li>
               </ol>
             </article>
-            <article class="panel detail-panel history-panel"><div class="panel-heading"><div><p class="eyebrow">EVENT HISTORY</p><h3>Recovery history</h3></div></div><div class="compact-empty recovery-history"><span class="empty-icon" aria-hidden="true">↻</span><strong>Waiting for cluster data</strong><p>Observed node health changes will appear here. MinIO healing-job details are not exposed through the S3 API.</p></div></article>
+            <article class="panel detail-panel history-panel">
+              <div class="panel-heading">
+                <div><p class="eyebrow">EVENT HISTORY</p><h3>Observed cluster events</h3></div>
+              </div>
+              <div class="compact-empty recovery-history">
+                <span class="empty-icon" aria-hidden="true">↻</span>
+                <strong>No node health changes observed</strong>
+                <p>Node outage and recovery events will appear here in real time.</p>
+              </div>
+            </article>
           </div>
         </section>
 
+        <!-- Data Integrity Verification -->
         <section class="section-block" id="integrity" aria-labelledby="integrity-title">
-          <div class="section-heading"><div><p class="eyebrow">VERIFICATION</p><h2 id="integrity-title">Data integrity</h2><p class="section-description">Compare object contents against their stored SHA-256 checksums or single-part ETags.</p></div><span class="state-tag state-disconnected integrity-status-tag">NOT CHECKED</span></div>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">VERIFICATION &amp; CHECKSUMS</p>
+              <h2 id="integrity-title">Data integrity &amp; repair</h2>
+              <p class="section-description">Scan every replica across all active storage nodes against its recorded SHA-256 hash. If corruption is detected, auto-heal restores the replica from healthy copies.</p>
+            </div>
+            <span class="state-tag state-real integrity-status-tag">READY</span>
+          </div>
           <article class="panel integrity-panel">
             <div class="integrity-overview">
-              <div class="integrity-stat"><span>Integrity checks</span><strong class="integrity-check-count">—</strong><small class="integrity-check-caption">No checks run yet</small></div>
-              <div class="integrity-stat"><span>Verification status</span><strong class="small-value integrity-check-status">Not checked</strong><small>Checks uploaded checksums and compatible ETags</small></div>
-              <div class="integrity-stat"><span>Corruption detection</span><strong class="small-value integrity-corruption-status">Not checked</strong><small>Failures are reported after verification</small></div>
-              <div class="integrity-stat"><span>Checksum details</span><strong class="small-value integrity-checksum-details">SHA-256 / ETag</strong><small>Unverifiable objects are identified</small></div>
+              <div class="integrity-stat"><span>Verified objects</span><strong class="integrity-check-count">0/0</strong><small class="integrity-check-caption">Checks ready</small></div>
+              <div class="integrity-stat"><span>Verification status</span><strong class="small-value integrity-check-status">Ready to scan</strong><small>Streams replicas &amp; checks SHA-256</small></div>
+              <div class="integrity-stat"><span>Corruption detected</span><strong class="small-value integrity-corruption-status">0 issues</strong><small>Auto-repair can restore damaged blocks</small></div>
+              <div class="integrity-stat"><span>Algorithm</span><strong class="small-value integrity-checksum-details">SHA-256 / MD5</strong><small>Cryptographic hash verification</small></div>
             </div>
-            <div class="verification-empty"><span class="empty-icon" aria-hidden="true">◇</span><div><strong class="integrity-result-title">Verification results will appear here</strong><p class="integrity-result-detail">Run a check to compare stored objects with their recorded checksums.</p></div><button class="button button-muted integrity-check-button" type="button" disabled>Run integrity check</button></div>
-            <div class="verification-legend" aria-label="Possible verification statuses"><span><i class="legend-dot verified"></i>Verified</span><span><i class="legend-dot warning"></i>Warning</span><span><i class="legend-dot checking"></i>Re-checking</span></div>
+            <div class="verification-controls">
+              <button class="button button-primary integrity-check-button" type="button">Run integrity check</button>
+              <button class="button button-secondary integrity-repair-button" type="button">Auto-repair replicas</button>
+            </div>
+            <div class="verification-empty">
+              <span class="empty-icon" aria-hidden="true">◇</span>
+              <div>
+                <strong class="integrity-result-title">Integrity verification ready</strong>
+                <p class="integrity-result-detail">Click "Run integrity check" to verify stored object replicas across all nodes.</p>
+              </div>
+            </div>
+            <div class="integrity-breakdown" id="integrity-breakdown-table" hidden>
+              <!-- Populated dynamically -->
+            </div>
           </article>
         </section>
 
-        <section class="section-block" id="rebalance" aria-labelledby="rebalance-title">
-          <div class="section-heading"><div><p class="eyebrow">DISTRIBUTION</p><h2 id="rebalance-title">Storage rebalancing</h2><p class="section-description">Monitor cluster availability and report rebalance details only when MinIO exposes them.</p></div><span class="state-tag state-disconnected rebalance-status-tag">UNAVAILABLE</span></div>
-          <article class="panel rebalance-panel"><span class="empty-icon large" aria-hidden="true">⇌</span><div><strong class="rebalance-title">Waiting for cluster data</strong><p class="rebalance-detail">Rebalance telemetry is unavailable while disconnected.</p></div><div class="rebalance-placeholder"><span>Reachable nodes <b class="rebalance-nodes">—</b></span><span>Rebalance history <b class="rebalance-history">—</b></span></div></article>
-        </section>
-
+        <!-- Activity Audit Feed -->
         <section class="section-block" id="activity" aria-labelledby="activity-title">
-          <div class="section-heading"><div><p class="eyebrow">AUDIT TRAIL</p><h2 id="activity-title">Activity logs</h2><p class="section-description">Review timestamped object, integrity, and node health events for this server session.</p></div><span class="state-tag state-disconnected activity-status-tag">NO EVENTS</span></div>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">AUDIT TRAIL</p>
+              <h2 id="activity-title">Live activity log</h2>
+              <p class="section-description">Timestamped operational log of all cluster uploads, downloads, node toggles, and repair tasks.</p>
+            </div>
+            <span class="state-tag state-real activity-status-tag">LIVE AUDIT</span>
+          </div>
           <article class="panel activity-panel">
             <div class="event-header"><span>TIME</span><span>EVENT TYPE</span><span>STATUS</span><span>MESSAGE</span></div>
-            <div class="activity-empty"><span class="empty-icon" aria-hidden="true">≡</span><strong>Your activity feed is ready</strong><p>Cluster events will appear here with their time, status, and details.</p></div>
+            <div class="activity-empty"><span class="empty-icon" aria-hidden="true">≡</span><strong>No events logged yet</strong><p>Cluster events will appear here in real time.</p></div>
           </article>
-        </section>
-
-        <section class="state-reference" aria-labelledby="state-reference-title">
-          <div><p class="eyebrow">DATA TRANSPARENCY</p><h2 id="state-reference-title">Know what your data is telling you.</h2><p>Every status is clearly labeled, so you can tell when information is live, loading, unavailable, or needs attention.</p></div>
-          <div class="state-list"><span class="state-tag state-real">REAL DATA</span><span class="state-tag state-loading">LOADING</span><span class="state-tag state-empty">NO DATA</span><span class="state-tag state-error">ERROR</span><span class="state-tag state-disconnected">DISCONNECTED</span></div>
         </section>
       </main>
 
-      <footer class="footer"><a class="brand footer-brand" href="#dashboard"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>DATA<span class="brand-accent">MESH</span></span></a><span>Distributed storage operations, made clear.</span><span class="footer-status"><i></i> Cluster disconnected</span></footer>
+      <footer class="footer">
+        <a class="brand footer-brand" href="#dashboard">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span>DATA<span class="brand-accent">MESH</span></span>
+        </a>
+        <span>Fault-tolerant distributed object storage operations.</span>
+        <span class="footer-status"><i></i> Cluster operational</span>
+      </footer>
     </div>
   </div>
-  <script src="app.js" defer></script>
 
+  <!-- Toast notification banner -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

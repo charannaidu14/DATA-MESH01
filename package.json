@@ -1,13 +1,20 @@
 {
   "name": "data-mesh",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "description": "Fault-tolerant distributed object storage operations system",
+  "main": "src/server.js",
   "scripts": {
-    "test": "node --check app.js && node --check server.js",
-    "start": "node server.js"
+    "start": "node src/server.js",
+    "test": "node --check app.js && node --check src/server.js && node --test test/backend.test.js",
+    "dev": "node --watch src/server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "distributed-storage",
+    "fault-tolerance",
+    "replication",
+    "self-healing",
+    "object-storage"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -18,3 +25,4 @@
     "ws": "^8.18.0"
   }
 }
+

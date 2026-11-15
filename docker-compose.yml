@@ -1,4 +1,5 @@
-version: '2'
+version: '3.8'
+
 services:
   minio1:
     image: 'bitnamilegacy/minio:latest'
@@ -10,6 +11,7 @@ services:
       - MINIO_DISTRIBUTED_MODE_ENABLED=yes
       - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
       - MINIO_SKIP_CLIENT=yes
+
   minio2:
     image: 'bitnamilegacy/minio:latest'
     ports:
@@ -20,6 +22,7 @@ services:
       - MINIO_DISTRIBUTED_MODE_ENABLED=yes
       - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
       - MINIO_SKIP_CLIENT=yes
+
   minio3:
     image: 'bitnamilegacy/minio:latest'
     ports:
@@ -30,6 +33,7 @@ services:
       - MINIO_DISTRIBUTED_MODE_ENABLED=yes
       - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
       - MINIO_SKIP_CLIENT=yes
+
   minio4:
     image: 'bitnamilegacy/minio:latest'
     ports:
@@ -40,3 +44,26 @@ services:
       - MINIO_DISTRIBUTED_MODE_ENABLED=yes
       - MINIO_DISTRIBUTED_NODES=minio1,minio2,minio3,minio4
       - MINIO_SKIP_CLIENT=yes
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - MINIO_ENDPOINT=minio1
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin12345
+      - MINIO_BUCKET=data-mesh-bucket
+      - MINIO_NODE_ENDPOINTS=minio1:9000,minio2:9000,minio3:9000,minio4:9000
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+      - minio4
+

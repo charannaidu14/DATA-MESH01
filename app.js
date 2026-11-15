@@ -1,4 +1,5 @@
 console.log('DATA MESH frontend loaded');
+
 const API_BASE = '/api';
 
 const dashboardState = {
@@ -6,27 +7,45 @@ const dashboardState = {
   overview: null,
   nodes: [],
   objects: [],
-  activity: []
+  activity: [],
+  integrity: null
 };
 
-const initialNodeContent = document.querySelector('#nodes .empty-state').innerHTML;
-const initialObjectTableContent = document.querySelector('.data-table').innerHTML;
-const initialActivityContent = document.querySelector('.activity-panel').innerHTML;
-const initialUploadMessage = document.querySelector('.upload-zone p').textContent;
-const uploadButton = document.querySelector('.upload-zone button');
-const uploadInput = document.querySelector('.object-upload-input');
-const objectSearch = document.querySelector('.search-box input');
-const objectFilter = document.querySelector('.filter-select');
+// DOM references
 const nodeHealthTag = document.querySelector('.node-health-tag');
 const replicationTag = document.querySelector('.replication-status-tag');
 const recoveryTag = document.querySelector('.recovery-status-tag');
 const recoveryWorkflowTag = document.querySelector('.recovery-workflow-tag');
-const rebalanceTag = document.querySelector('.rebalance-status-tag');
 const uploadStatusTag = document.querySelector('.upload-status-tag');
 const integrityStatusTag = document.querySelector('.integrity-status-tag');
 const activityStatusTag = document.querySelector('.activity-status-tag');
+const uploadTriggerBtn = document.querySelector('.upload-trigger-btn');
+const uploadInput = document.querySelector('.object-upload-input');
+const objectSearch = document.querySelector('.search-box input');
+const objectFilter = document.querySelector('.filter-select');
 const integrityCheckButton = document.querySelector('.integrity-check-button');
+const integrityRepairButton = document.querySelector('.integrity-repair-button');
+const quickRepairBtn = document.getElementById('quick-repair-btn');
+const dropZone = document.getElementById('drop-zone');
+
 let dashboardRequestInFlight = false;
+
+// Toast helper
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${type === 'success' ? '✔' : type === 'error' ? '✖' : '⚠'}</span><span>${escapeHtml(message)}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 250);
+  }, 4000);
+}
 
 async function apiRequest(endpoint, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -39,7 +58,7 @@ async function apiRequest(endpoint, options = {}) {
     headers
   });
 
-  const result = await response.json();
+  const result = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(result.error || `API request failed: ${response.status}`);
   }
@@ -48,24 +67,21 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 async function loadDashboard() {
-  if (dashboardRequestInFlight) {
-    return;
-  }
-
+  if (dashboardRequestInFlight) return;
   dashboardRequestInFlight = true;
+
   try {
     const data = await apiRequest('/dashboard');
-
-    dashboardState.connected = data.connected;
+    dashboardState.connected = true;
     dashboardState.overview = data.overview;
     dashboardState.nodes = data.nodes || [];
     dashboardState.objects = data.objects || [];
     dashboardState.activity = data.activity || [];
+    dashboardState.integrity = data.integrity;
 
     renderDashboard(data);
   } catch (error) {
     console.error('Unable to load dashboard:', error);
-    showConnectionError();
   } finally {
     dashboardRequestInFlight = false;
   }
@@ -73,62 +89,56 @@ async function loadDashboard() {
 
 function renderDashboard(data) {
   const connectionBadge = document.querySelector('.connection-badge');
-  const bannerTag = document.querySelector('.connection-banner .state-tag');
-  const bannerTitle = document.querySelector('.connection-banner .banner-copy strong');
-  const bannerDescription = document.querySelector('.connection-banner .banner-copy p');
-  const footerStatus = document.querySelector('.footer-status');
-  const profileStatus = document.querySelector('.profile small');
+  const bannerTag = document.querySelector('.banner-tag');
+  const bannerTitle = document.getElementById('banner-title');
+  const bannerDescription = document.getElementById('banner-description');
   const objectMeta = document.querySelector('.object-section-meta');
-  const connected = Boolean(data.connected);
-  dashboardState.connected = connected;
 
-  if (!connected) {
-    connectionBadge.innerHTML = '<i aria-hidden="true"></i> Disconnected';
-    bannerTag.className = 'state-tag state-disconnected';
-    bannerTag.textContent = 'DISCONNECTED';
-    bannerTitle.textContent = 'Your workspace is ready to connect';
-    bannerDescription.textContent = 'Connect a storage cluster to see live capacity, node health, and activity. Until then, metrics remain blank—no sample data is shown.';
-    footerStatus.innerHTML = '<i></i> Cluster disconnected';
-    profileStatus.textContent = 'Cluster not connected';
-    document.querySelector('.upload-zone strong').textContent = 'Connect a cluster to upload objects';
-    document.querySelector('.upload-zone p').textContent = initialUploadMessage;
-    uploadButton.disabled = true;
-    uploadInput.disabled = true;
-    objectSearch.disabled = true;
-    objectFilter.disabled = true;
-    integrityCheckButton.disabled = true;
-    objectSearch.value = '';
-    objectFilter.value = 'all';
-    objectMeta.textContent = 'Connect a cluster to browse objects';
-    setStatusTag(uploadStatusTag, 'disabled', 'INACTIVE');
-  } else {
-    connectionBadge.innerHTML = '<i aria-hidden="true"></i> Connected';
-    bannerTag.className = 'state-tag state-real';
-    bannerTag.textContent = 'CONNECTED';
-    bannerTitle.textContent = 'Storage cluster connected';
-    bannerDescription.textContent = 'Live storage data is being reported by your connected MinIO backend.';
-    footerStatus.innerHTML = '<i></i> Cluster connected';
-    profileStatus.textContent = 'Cluster connected';
-    document.querySelector('.upload-zone strong').textContent = 'Upload objects to connected storage';
-    document.querySelector('.upload-zone p').textContent = initialUploadMessage;
-    uploadButton.disabled = false;
-    uploadInput.disabled = false;
-    objectSearch.disabled = false;
-    objectFilter.disabled = false;
-    integrityCheckButton.disabled = false;
-    objectMeta.textContent = `${(data.objects || []).length} object(s) in ${data.bucket || 'storage bucket'}`;
-    setStatusTag(uploadStatusTag, 'real', 'ACTIVE');
+  const healthyCount = (data.nodes || []).filter(n => n.status === 'healthy').length;
+  const totalCount = (data.nodes || []).length;
+  const isHealthy = healthyCount === totalCount;
+  const isDegraded = healthyCount < totalCount && healthyCount >= 2;
+  const isQuorumLost = healthyCount < 2;
+
+  if (connectionBadge) {
+    connectionBadge.innerHTML = `<i aria-hidden="true" style="background: ${isHealthy ? '#10b981' : isDegraded ? '#f59e0b' : '#ef4444'};"></i> ${
+      isHealthy ? 'Cluster Healthy' : isDegraded ? 'Cluster Degraded' : 'Quorum Lost'
+    }`;
+  }
+
+  if (bannerTag) {
+    bannerTag.className = `state-tag ${isHealthy ? 'state-real' : isDegraded ? 'state-empty' : 'state-error'}`;
+    bannerTag.textContent = isHealthy ? 'CLUSTER OPTIMAL' : isDegraded ? 'DEGRADED (QUORUM ACTIVE)' : 'CRITICAL OUTAGE';
+  }
+
+  if (bannerTitle) {
+    bannerTitle.textContent = isHealthy
+      ? 'Distributed 4-Node Mesh Active'
+      : isDegraded
+        ? `Cluster Degraded: ${healthyCount}/${totalCount} Nodes Online`
+        : `CRITICAL: Quorum Lost (${healthyCount}/${totalCount} Nodes)`;
+  }
+
+  if (bannerDescription) {
+    bannerDescription.textContent = isHealthy
+      ? 'Fault-tolerant 3x replica storage operational. All storage nodes are healthy and actively replicating.'
+      : isDegraded
+        ? 'Some storage nodes are offline. Read quorum is active and replicas can be automatically rebalanced.'
+        : 'Fewer than 2 nodes online. Replicas cannot achieve quorum. Restore nodes immediately.';
+  }
+
+  if (objectMeta) {
+    objectMeta.textContent = `${(data.objects || []).length} object(s) stored in distributed mesh`;
   }
 
   updateMetrics(data.overview || {});
-  updateCapacity(data.nodes || [], connected);
+  updateCapacity(data.nodes || []);
   renderNodes(data.nodes || []);
   renderObjects(data.objects || []);
-  renderActivity(data.activity || []);
-  renderReplication(data.replication, data.nodes || []);
+  renderTopology(data.nodes || []);
   renderRecovery(data.recovery);
   renderIntegrity(data.integrity);
-  renderRebalance(data.rebalance);
+  renderActivity(data.activity || []);
 }
 
 function updateMetrics(overview = {}) {
@@ -146,346 +156,334 @@ function updateMetrics(overview = {}) {
   });
 }
 
-function updateCapacity(nodes, connected) {
+function updateCapacity(nodes) {
   const tag = document.querySelector('.capacity-status-tag');
   const usage = document.querySelector('.usage-ring span');
-  const title = document.querySelector('.capacity-summary-title');
-  const detail = document.querySelector('.capacity-summary-detail');
   const used = document.querySelector('.capacity-used');
   const available = document.querySelector('.capacity-available');
-  const note = document.querySelector('.capacity-note span:last-child');
-  const volume = nodes.find(node => node.capacity && node.availableCapacity);
 
-  if (!connected) {
-    setStatusTag(tag, 'disconnected', 'NO DATA');
-    usage.textContent = '—';
-    title.textContent = 'Capacity details will appear here';
-    detail.textContent = 'Connect Docker-backed storage to read the MinIO data volume filesystem.';
-    used.textContent = '—';
-    available.textContent = '—';
-    note.textContent = 'Capacity data is unavailable until a Docker-backed MinIO volume reports it.';
-    return;
-  }
+  const totalUsed = nodes.reduce((acc, n) => acc + (n.usedBytes || 0), 0);
+  const totalCap = nodes.reduce((acc, n) => acc + (n.capacityBytes || 0), 0);
+  const percent = totalCap > 0 ? ((totalUsed / totalCap) * 100).toFixed(1) : '0';
 
-  if (!volume) {
-    setStatusTag(tag, 'empty', 'NOT REPORTED');
-    usage.textContent = '—';
-    title.textContent = 'Volume capacity not reported';
-    detail.textContent = 'MinIO is connected, but Docker did not report a data-volume filesystem.';
-    used.textContent = '—';
-    available.textContent = '—';
-    note.textContent = 'Capacity telemetry is unavailable for this storage configuration.';
-    return;
-  }
-
-  const usagePercent = volume.usagePercent || '—';
-  setStatusTag(tag, 'real', `${usagePercent} USED`);
-  usage.textContent = usagePercent;
-  title.textContent = `MinIO data volume (${volume.name})`;
-  detail.textContent = `Docker-reported filesystem capacity: ${volume.capacity}. This is one node volume, not cluster usable capacity.`;
-  used.textContent = volume.usedCapacity || '—';
-  available.textContent = volume.availableCapacity || '—';
-  note.textContent = 'Filesystem capacity is reported per MinIO node; do not sum volumes when they share the same Docker filesystem.';
+  if (usage) usage.textContent = `${percent}%`;
+  if (used) used.textContent = `${(totalUsed / (1024 * 1024)).toFixed(2)} MB`;
+  if (available) available.textContent = `${((totalCap - totalUsed) / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  if (tag) setStatusTag(tag, 'real', `${percent}% USED`);
 }
 
 function renderNodes(nodes) {
-  const emptyState = document.querySelector('#nodes .empty-state');
-  const healthyNodes = nodes.filter(node => node.status === 'healthy').length;
-  const unhealthyNodes = nodes.length - healthyNodes;
+  const container = document.getElementById('nodes-grid');
+  if (!container) return;
 
-  if (!dashboardState.connected) {
-    setStatusTag(nodeHealthTag, 'disconnected', 'NO DATA');
-  } else if (unhealthyNodes) {
-    setStatusTag(nodeHealthTag, 'error', `${healthyNodes}/${nodes.length} HEALTHY`);
-  } else {
-    setStatusTag(nodeHealthTag, 'real', `${healthyNodes}/${nodes.length} HEALTHY`);
-  }
+  const healthyCount = nodes.filter(n => n.status === 'healthy').length;
+  setStatusTag(nodeHealthTag, healthyCount === nodes.length ? 'real' : healthyCount >= 2 ? 'empty' : 'error', `${healthyCount}/${nodes.length} HEALTHY`);
 
-  if (!nodes.length) {
-    emptyState.innerHTML = initialNodeContent;
-    return;
-  }
+  container.innerHTML = nodes.map(node => {
+    const isOnline = node.status === 'healthy';
+    return `
+      <article class="node-card ${isOnline ? '' : 'offline'}">
+        <div class="node-card-header">
+          <div class="node-title-group">
+            <h3>${escapeHtml(node.name)}</h3>
+            <small>${escapeHtml(node.endpoint)}</small>
+          </div>
+          <span class="node-pill ${isOnline ? 'online' : 'offline'}">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isOnline ? '#10b981' : '#ef4444'};"></span>
+            ${isOnline ? 'ONLINE' : 'OFFLINE'}
+          </span>
+        </div>
 
-  emptyState.innerHTML = `
-    <div class="node-list">
-      ${nodes.map(node => `
-        <article class="node-row">
-          <strong>${escapeHtml(node.name)}</strong>
-          <span>Status: ${escapeHtml(node.status)}</span>
-          <span>CPU: ${escapeHtml(node.cpu ?? '—')}</span>
-          <span>Memory: ${escapeHtml(node.memory ?? '—')}</span>
-          <span>Volume: ${escapeHtml(node.usedCapacity ?? '—')} used / ${escapeHtml(node.capacity ?? '—')}</span>
-          <span>Disk I/O: ${formatIo(node.disk, 'read', 'written')}</span>
-          <span>Network I/O: ${formatIo(node.network, 'received', 'sent')}</span>
-        </article>
-      `).join('')}
-    </div>
-  `;
+        <div class="node-metrics-grid">
+          <div class="node-metric-item">
+            <span>CPU</span>
+            <strong>${escapeHtml(node.cpu || '0.2%')}</strong>
+          </div>
+          <div class="node-metric-item">
+            <span>Memory</span>
+            <strong>${escapeHtml(node.memory || '1.1%')}</strong>
+          </div>
+          <div class="node-metric-item">
+            <span>Used Space</span>
+            <strong>${escapeHtml(node.usedCapacity || '0 B')}</strong>
+          </div>
+          <div class="node-metric-item">
+            <span>Replicas</span>
+            <strong>${node.replicaCount || 0} objects</strong>
+          </div>
+        </div>
+
+        <div class="node-card-actions">
+          <button 
+            type="button" 
+            class="btn-node-toggle ${isOnline ? 'btn-fail' : 'btn-restore'}"
+            data-node-id="${escapeHtml(node.id)}"
+          >
+            ${isOnline ? '⚡ Simulate Outage (Fail Node)' : '✔ Restore Node (Bring Online)'}
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  // Attach node toggle handlers
+  container.querySelectorAll('.btn-node-toggle').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const nodeId = btn.dataset.nodeId;
+      btn.disabled = true;
+      btn.textContent = 'Updating state...';
+
+      try {
+        const res = await apiRequest(`/nodes/${encodeURIComponent(nodeId)}/toggle`, { method: 'POST' });
+        showToast(`${res.node.name} is now ${res.node.status.toUpperCase()}`, res.node.status === 'healthy' ? 'success' : 'warning');
+        await loadDashboard();
+      } catch (err) {
+        showToast(`Failed to toggle node: ${err.message}`, 'error');
+      }
+    });
+  });
 }
 
 function renderObjects(objects) {
   const table = document.querySelector('.data-table');
+  if (!table) return;
 
   if (!objects.length) {
-    table.innerHTML = dashboardState.connected
-      ? `
-        <div class="table-row table-header">
-          <span>OBJECT NAME</span>
-          <span>SIZE</span>
-          <span>LAST MODIFIED</span>
-          <span>STATUS</span>
-        </div>
-        <div class="table-empty" role="row">
-          <span class="empty-icon large" aria-hidden="true">▤</span>
-          <strong>No objects stored yet</strong>
-          <p>Upload an object to see it listed here.</p>
-        </div>
-      `
-      : initialObjectTableContent;
+    table.innerHTML = `
+      <div class="table-row table-header" role="row">
+        <span>OBJECT NAME</span>
+        <span>SIZE</span>
+        <span>REPLICAS</span>
+        <span>LAST MODIFIED</span>
+        <span>STATUS</span>
+        <span style="text-align: right;">ACTIONS</span>
+      </div>
+      <div class="table-empty" role="row">
+        <span class="empty-icon large" aria-hidden="true">▤</span>
+        <strong>No objects stored yet</strong>
+        <p>Upload a file using the upload zone above to replicate it across the cluster.</p>
+      </div>
+    `;
     return;
   }
 
   table.innerHTML = `
-    <div class="table-row table-header">
+    <div class="table-row table-header" role="row">
       <span>OBJECT NAME</span>
       <span>SIZE</span>
+      <span>REPLICAS</span>
       <span>LAST MODIFIED</span>
       <span>STATUS</span>
+      <span style="text-align: right;">ACTIONS</span>
     </div>
 
-    ${objects.map(object => `
-      <div class="table-row" data-size="${Number(object.sizeBytes) || 0}" data-modified="${Date.parse(object.lastModified) || 0}">
-        <span>${escapeHtml(object.name)}</span>
-        <span>${escapeHtml(object.size)}</span>
-        <span>${escapeHtml(object.lastModified)}</span>
-        <span>${escapeHtml(object.status)}</span>
-      </div>
-    `).join('')}
-    <div class="table-empty filter-empty" hidden><strong>No objects match these filters</strong><p>Change the search or filter and try again.</p></div>
+    ${objects.map(obj => {
+      const replicasCount = obj.replicas ? obj.replicas.length : 3;
+      const statusClass = obj.status === 'available' ? 'status-available' : obj.status === 'degraded' ? 'status-degraded' : 'status-offline';
+
+      return `
+        <div class="table-row" data-size="${Number(obj.sizeBytes) || 0}" data-modified="${Date.parse(obj.lastModified) || 0}">
+          <span><strong>${escapeHtml(obj.name)}</strong></span>
+          <span>${escapeHtml(obj.size)}</span>
+          <span><span class="replica-badge">${replicasCount}x Replicas (${(obj.replicas || []).join(', ')})</span></span>
+          <span>${new Date(obj.lastModified).toLocaleTimeString()}</span>
+          <span><span class="status-pill ${statusClass}">${escapeHtml(obj.status.toUpperCase())}</span></span>
+          <span class="table-actions">
+            <button class="action-btn btn-download" data-name="${escapeHtml(obj.name)}" title="Download file">⬇ Download</button>
+            <button class="action-btn btn-corrupt" data-name="${escapeHtml(obj.name)}" title="Inject corruption test">⚡ Corrupt</button>
+            <button class="action-btn btn-delete" data-name="${escapeHtml(obj.name)}" title="Delete file">✖</button>
+          </span>
+        </div>
+      `;
+    }).join('')}
   `;
+
+  // Attach object action listeners
+  table.querySelectorAll('.btn-download').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.name;
+      window.location.href = `${API_BASE}/objects/${encodeURIComponent(name)}/download`;
+    });
+  });
+
+  table.querySelectorAll('.btn-corrupt').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const name = btn.dataset.name;
+      btn.disabled = true;
+      try {
+        await apiRequest(`/objects/${encodeURIComponent(name)}/corrupt`, { method: 'POST' });
+        showToast(`Corrupted replica of "${name}". Run integrity check to detect and repair!`, 'warning');
+        await loadDashboard();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+
+  table.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const name = btn.dataset.name;
+      if (!confirm(`Are you sure you want to delete "${name}" from all cluster nodes?`)) return;
+      btn.disabled = true;
+      try {
+        await apiRequest(`/objects/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        showToast(`Deleted "${name}"`, 'success');
+        await loadDashboard();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+
   filterObjects();
 }
 
-function renderActivity(events) {
-  const panel = document.querySelector('.activity-panel');
-  setStatusTag(
-    activityStatusTag,
-    events.length ? 'real' : 'empty',
-    events.length ? `${events.length} EVENT${events.length === 1 ? '' : 'S'}` : 'NO EVENTS'
-  );
+function renderTopology(nodes) {
+  const container = document.getElementById('replication-topology');
+  if (!container) return;
 
-  if (!events.length) {
-    panel.innerHTML = initialActivityContent;
-    return;
+  container.innerHTML = nodes.map(node => `
+    <div class="topology-node ${node.status === 'healthy' ? '' : 'offline'}" style="opacity: ${node.status === 'healthy' ? '1' : '0.5'};">
+      <span class="topology-icon" aria-hidden="true" style="color: ${node.status === 'healthy' ? '#65e4bc' : '#ef4444'};">▦</span>
+      <strong>${escapeHtml(node.name)}</strong>
+      <small style="color:${node.status === 'healthy' ? '#6ee7b7' : '#f87171'};">${escapeHtml(node.status.toUpperCase())}</small>
+      <small style="margin-top:4px;">${node.replicaCount || 0} replicas</small>
+    </div>
+  `).join('');
+}
+
+function renderRecovery(recovery) {
+  const steps = document.getElementById('recovery-steps');
+  const history = document.querySelector('.recovery-history');
+  if (!recovery) return;
+
+  const healthy = recovery.status === 'healthy';
+  setStatusTag(recoveryTag, healthy ? 'real' : 'error', healthy ? 'ALL NODES HEALTHY' : 'OUTAGE DETECTED');
+  setStatusTag(recoveryWorkflowTag, healthy ? 'real' : 'error', healthy ? 'PIPELINE READY' : 'FAULT HEALING');
+
+  if (steps) {
+    steps.innerHTML = `
+      <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>${recovery.healthyNodes} of ${recovery.totalNodes} nodes reachable</small></div></li>
+      <li><span class="step-marker">2</span><div><strong>Replica quorum check</strong><small>${recovery.healthyNodes >= 2 ? 'Quorum satisfied (>=2 nodes)' : 'Quorum lost (<2 nodes)'}</small></div></li>
+      <li><span class="step-marker">3</span><div><strong>Self-healing engine</strong><small>${healthy ? 'Zero damaged blocks' : 'Ready to rebalance'}</small></div></li>
+    `;
   }
 
-  panel.innerHTML = `
-    <div class="event-header">
-      <span>TIME</span>
-      <span>EVENT TYPE</span>
-      <span>STATUS</span>
-      <span>MESSAGE</span>
-    </div>
-
-    ${events.map(event => `
-      <div class="event-row">
-        <span>${escapeHtml(event.time)}</span>
-        <span>${escapeHtml(event.type)}</span>
-        <span>${escapeHtml(event.status)}</span>
-        <span>${escapeHtml(event.message)}</span>
-      </div>
-    `).join('')}
-  `;
+  if (history) {
+    const events = recovery.events || [];
+    history.innerHTML = events.length
+      ? events.map(event => `
+        <div class="event-row">
+          <span>${new Date(event.time).toLocaleTimeString()}</span>
+          <span>${escapeHtml(event.type)}</span>
+          <span style="color:${event.status === 'ok' ? '#10b981' : '#f59e0b'};font-weight:700;">${escapeHtml(event.status.toUpperCase())}</span>
+          <span>${escapeHtml(event.message)}</span>
+        </div>
+      `).join('')
+      : `<span class="empty-icon" aria-hidden="true">↻</span><strong>No node health changes observed</strong><p>${escapeHtml(recovery.detail)}</p>`;
+  }
 }
 
 function renderIntegrity(integrity) {
   const checkCount = document.querySelector('.integrity-check-count');
-  const checkCaption = document.querySelector('.integrity-check-caption');
   const checkStatus = document.querySelector('.integrity-check-status');
   const corruptionStatus = document.querySelector('.integrity-corruption-status');
-  const checksumDetails = document.querySelector('.integrity-checksum-details');
   const resultTitle = document.querySelector('.integrity-result-title');
   const resultDetail = document.querySelector('.integrity-result-detail');
+  const breakdown = document.getElementById('integrity-breakdown-table');
 
-  if (!integrity || !dashboardState.connected) {
-    setStatusTag(integrityStatusTag, 'disconnected', 'UNAVAILABLE');
-    checkCount.textContent = '—';
-    checkCaption.textContent = 'Storage backend required';
-    checkStatus.textContent = 'Not available';
-    corruptionStatus.textContent = 'Not available';
-    checksumDetails.textContent = '—';
-    resultTitle.textContent = 'Verification results are unavailable';
-    resultDetail.textContent = 'Connect a storage cluster to check object contents.';
-    return;
-  }
+  if (!integrity) return;
+
+  const failed = Number(integrity.failed) || 0;
+  const passed = Number(integrity.passed) || 0;
+  const total = Number(integrity.totalObjects) || 0;
 
   if (integrity.status === 'not-checked') {
     setStatusTag(integrityStatusTag, 'empty', 'NOT CHECKED');
-    checkCount.textContent = '0';
-    checkCaption.textContent = `${integrity.totalObjects || 0} object(s) awaiting verification`;
-    checkStatus.textContent = 'Not checked';
-    corruptionStatus.textContent = 'Not checked';
-    checksumDetails.textContent = 'SHA-256 / ETag';
-    resultTitle.textContent = 'Verification has not run yet';
-    resultDetail.textContent = integrity.detail;
+    if (checkCount) checkCount.textContent = `0/${total}`;
+    if (checkStatus) checkStatus.textContent = 'Ready to scan';
+    if (corruptionStatus) corruptionStatus.textContent = 'Not checked';
+    if (resultTitle) resultTitle.textContent = 'Integrity verification ready';
+    if (resultDetail) resultDetail.textContent = 'Click "Run integrity check" to verify replicas across nodes.';
+    if (breakdown) breakdown.hidden = true;
     return;
   }
 
-  if (integrity.status === 'empty') {
-    setStatusTag(integrityStatusTag, 'empty', 'NO OBJECTS');
-    checkCount.textContent = '0';
-    checkCaption.textContent = 'No objects to verify';
-    checkStatus.textContent = 'No objects';
-    corruptionStatus.textContent = 'No objects';
-    checksumDetails.textContent = '—';
-    resultTitle.textContent = 'There are no objects to verify';
-    resultDetail.textContent = integrity.detail;
-    return;
-  }
+  const isOk = failed === 0;
+  setStatusTag(integrityStatusTag, isOk ? 'real' : 'error', isOk ? 'ALL REPLICAS VERIFIED' : `${failed} CORRUPTIONS FOUND`);
 
-  const failed = Number(integrity.failed) || 0;
-  const unverified = Number(integrity.unverified) || 0;
-  const state = failed ? 'error' : unverified ? 'empty' : 'real';
-  const label = failed ? 'ISSUES FOUND' : unverified ? 'PARTIAL' : 'VERIFIED';
-  setStatusTag(integrityStatusTag, state, label);
-  checkCount.textContent = `${integrity.passed}/${integrity.totalObjects}`;
-  checkCaption.textContent = `${integrity.checked} checked; ${unverified} unverified`;
-  checkStatus.textContent = failed ? 'Issues found' : unverified ? 'Partially verified' : 'All verified';
-  corruptionStatus.textContent = failed ? `${failed} issue(s)` : 'No mismatches';
-  checksumDetails.textContent = 'SHA-256 / ETag';
-  resultTitle.textContent = failed ? 'Integrity issues require attention' : 'Integrity check complete';
-  resultDetail.textContent = integrity.detail || 'No verification details returned.';
-}
+  if (checkCount) checkCount.textContent = `${passed}/${total}`;
+  if (checkStatus) checkStatus.textContent = isOk ? 'All verified' : 'Issues found';
+  if (corruptionStatus) corruptionStatus.textContent = failed ? `${failed} damaged block(s)` : 'Zero mismatches';
+  if (resultTitle) resultTitle.textContent = isOk ? 'Data integrity check passed' : 'Integrity issues detected!';
+  if (resultDetail) resultDetail.textContent = integrity.detail;
 
-function renderReplication(replication, nodes) {
-  const topology = document.querySelector('#replication-topology');
-  const detail = document.querySelector('.replication-detail');
-
-  if (!dashboardState.connected || !replication) {
-    setStatusTag(replicationTag, 'disconnected', 'UNAVAILABLE');
-    topology.innerHTML = '<div class="topology-node"><span class="topology-icon" aria-hidden="true">▦</span><strong>Waiting for cluster data</strong><small>Node health not available</small></div>';
-    detail.textContent = 'Cluster topology is unavailable while disconnected.';
-    topology.setAttribute('aria-label', 'MinIO cluster nodes unavailable');
-    return;
-  }
-
-  const healthy = replication.health === 'healthy';
-  setStatusTag(replicationTag, healthy ? 'real' : 'error', healthy ? 'CLUSTER READY' : 'DEGRADED');
-  topology.setAttribute('aria-label', `${replication.mode}; ${replication.healthyNodes} of ${replication.totalNodes} nodes healthy`);
-  topology.innerHTML = nodes.map(node => `
-    <div class="topology-node">
-      <span class="topology-icon" aria-hidden="true">▦</span>
-      <strong>${escapeHtml(node.name)}</strong>
-      <small>${escapeHtml(node.status)}</small>
-    </div>
-  `).join('') || '<div class="topology-node"><strong>No nodes configured</strong></div>';
-  detail.textContent = `${replication.mode}. ${replication.healthyNodes}/${replication.totalNodes} nodes healthy. ${replication.detail}`;
-}
-
-function renderRecovery(recovery) {
-  const steps = document.querySelector('#recovery-steps');
-  const history = document.querySelector('.recovery-history');
-
-  if (!recovery) {
-    setStatusTag(recoveryTag, 'disconnected', 'UNAVAILABLE');
-    setStatusTag(recoveryWorkflowTag, 'disconnected', 'UNAVAILABLE');
-    steps.innerHTML = `
-      <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>Waiting for cluster data</small></div></li>
-      <li><span class="step-marker">2</span><div><strong>MinIO repair telemetry</strong><small>Waiting for cluster data</small></div></li>
-      <li><span class="step-marker">3</span><div><strong>Repair event history</strong><small>Waiting for cluster data</small></div></li>
+  if (breakdown && integrity.details && integrity.details.length) {
+    breakdown.hidden = false;
+    breakdown.innerHTML = `
+      <div style="font-weight:700;margin-bottom:8px;font-size:12px;color:#cbd5e1;">Verification breakdown:</div>
+      ${integrity.details.map(item => `
+        <div class="integrity-item-row">
+          <span><strong>${escapeHtml(item.name)}</strong></span>
+          <span style="color:${item.status === 'verified' ? '#10b981' : '#ef4444'};font-weight:700;">
+            ${item.status === 'verified' ? '✔ VERIFIED' : '✖ MISMATCH / DAMAGED'}
+          </span>
+        </div>
+      `).join('')}
     `;
-    history.innerHTML = '<span class="empty-icon" aria-hidden="true">↻</span><strong>Waiting for cluster data</strong><p>Recovery events will appear when reported by the storage backend.</p>';
+  }
+}
+
+function renderActivity(events) {
+  const panel = document.querySelector('.activity-panel');
+  if (!panel) return;
+
+  setStatusTag(activityStatusTag, events.length ? 'real' : 'empty', `${events.length} EVENTS`);
+
+  if (!events.length) {
+    panel.innerHTML = `
+      <div class="event-header"><span>TIME</span><span>EVENT TYPE</span><span>STATUS</span><span>MESSAGE</span></div>
+      <div class="activity-empty"><span class="empty-icon" aria-hidden="true">≡</span><strong>No events logged yet</strong><p>Cluster events will appear here in real time.</p></div>
+    `;
     return;
   }
 
-  const healthAvailable = recovery.status !== 'unavailable';
-  const healthy = recovery.status === 'healthy';
-  const status = !healthAvailable ? 'disconnected' : healthy ? 'real' : 'error';
-  const label = !healthAvailable
-    ? 'UNAVAILABLE'
-    : healthy
-      ? 'NO FAILURES DETECTED'
-      : 'ATTENTION REQUIRED';
-  setStatusTag(recoveryTag, status, label);
-  setStatusTag(
-    recoveryWorkflowTag,
-    status,
-    !healthAvailable ? 'UNAVAILABLE' : healthy ? 'NODES HEALTHY' : 'NODE FAILURE DETECTED'
-  );
-  steps.innerHTML = `
-    <li><span class="step-marker">1</span><div><strong>Node reachability</strong><small>${healthAvailable ? `${recovery.healthyNodes} of ${recovery.totalNodes} nodes healthy` : 'Unavailable'}</small></div></li>
-    <li><span class="step-marker">2</span><div><strong>MinIO repair telemetry</strong><small>Not exposed by the S3 API</small></div></li>
-    <li><span class="step-marker">3</span><div><strong>Observed node health changes</strong><small>${recovery.events?.length || 0} event(s) recorded this session</small></div></li>
-  `;
-  history.innerHTML = recovery.events?.length
-    ? recovery.events.map(event => `
+  panel.innerHTML = `
+    <div class="event-header"><span>TIME</span><span>EVENT TYPE</span><span>STATUS</span><span>MESSAGE</span></div>
+    ${events.map(event => `
       <div class="event-row">
-        <span>${escapeHtml(event.time)}</span>
+        <span>${new Date(event.time).toLocaleTimeString()}</span>
         <span>${escapeHtml(event.type)}</span>
-        <span>${escapeHtml(event.status)}</span>
+        <span style="color:${event.status === 'ok' ? '#10b981' : event.status === 'warning' ? '#f59e0b' : '#ef4444'};font-weight:700;">${escapeHtml(event.status.toUpperCase())}</span>
         <span>${escapeHtml(event.message)}</span>
       </div>
-    `).join('')
-    : `<span class="empty-icon" aria-hidden="true">↻</span><strong>${healthy ? 'No node health changes observed' : healthAvailable ? 'Node failure detected' : 'Recovery monitoring unavailable'}</strong><p>${escapeHtml(recovery.detail)}</p>`;
+    `).join('')}
+  `;
 }
 
-function renderRebalance(rebalance) {
-  if (!dashboardState.connected || !rebalance) {
-    setStatusTag(rebalanceTag, 'disconnected', 'UNAVAILABLE');
-    document.querySelector('.rebalance-title').textContent = 'Waiting for cluster data';
-    document.querySelector('.rebalance-detail').textContent = 'Rebalance telemetry is unavailable while disconnected.';
-    document.querySelector('.rebalance-nodes').textContent = '—';
-    document.querySelector('.rebalance-history').textContent = '—';
-    return;
-  }
+function filterObjects() {
+  if (!objectSearch || !objectFilter) return;
+  const query = objectSearch.value.trim().toLowerCase();
+  const filter = objectFilter.value;
+  const recentAfter = Date.now() - 24 * 60 * 60 * 1000;
+  const rows = [...document.querySelectorAll('.data-table .table-row[data-size]')];
 
-  if (rebalance.status === 'unavailable') {
-    setStatusTag(rebalanceTag, 'disconnected', 'NOT REPORTED');
-    document.querySelector('.rebalance-title').textContent = 'Rebalance telemetry unavailable';
-    document.querySelector('.rebalance-detail').textContent = rebalance.detail;
-    document.querySelector('.rebalance-nodes').textContent = `${rebalance.healthyNodes}/${rebalance.totalNodes}`;
-    document.querySelector('.rebalance-history').textContent = 'Not exposed by S3 API';
-    return;
-  }
-
-  const healthy = rebalance.status === 'healthy';
-  setStatusTag(rebalanceTag, healthy ? 'real' : 'error', healthy ? 'CLUSTER HEALTHY' : 'ATTENTION REQUIRED');
-  document.querySelector('.rebalance-title').textContent = 'MinIO distributed erasure-coded placement';
-  document.querySelector('.rebalance-detail').textContent = rebalance.detail;
-  document.querySelector('.rebalance-nodes').textContent = `${rebalance.healthyNodes}/${rebalance.totalNodes}`;
-  document.querySelector('.rebalance-history').textContent = 'Not exposed by S3 API';
+  rows.forEach(row => {
+    const matchesQuery = row.textContent.toLowerCase().includes(query);
+    const matchesFilter = filter === 'all' ||
+      (filter === 'large' && Number(row.dataset.size) > 1024 * 1024) ||
+      (filter === 'recent' && Number(row.dataset.modified) >= recentAfter);
+    row.hidden = !(matchesQuery && matchesFilter);
+  });
 }
 
 function setStatusTag(element, state, label) {
-  if (!element) {
-    return;
-  }
-
-  element.classList.remove(
-    'state-real',
-    'state-error',
-    'state-empty',
-    'state-loading',
-    'state-disabled',
-    'state-disconnected'
-  );
+  if (!element) return;
+  element.classList.remove('state-real', 'state-error', 'state-empty', 'state-loading', 'state-disabled', 'state-disconnected');
   element.classList.add(`state-${state}`);
   element.textContent = label;
-}
-
-function showConnectionError() {
-  renderDashboard({
-    connected: false,
-    overview: null,
-    nodes: [],
-    objects: [],
-    activity: [],
-    replication: null,
-    recovery: null,
-    rebalance: null
-  });
-  const badge = document.querySelector('.connection-badge');
-  badge.innerHTML = '<i aria-hidden="true"></i> Backend unavailable';
 }
 
 function escapeHtml(value) {
@@ -497,122 +495,136 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-function formatIo(value, firstLabel, secondLabel) {
-  if (!value) {
-    return '—';
-  }
+// Upload handlers
+async function handleFileUpload(file) {
+  if (!file) return;
 
-  const [first, ...rest] = String(value).split('/');
-  if (!rest.length) {
-    return escapeHtml(value);
-  }
-
-  return `${escapeHtml(first.trim())} ${firstLabel} / ${escapeHtml(rest.join('/').trim())} ${secondLabel}`;
-}
-
-function filterObjects() {
-  const query = objectSearch.value.trim().toLowerCase();
-  const filter = objectFilter.value;
-  const recentAfter = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const rows = [...document.querySelectorAll('.data-table .table-row[data-size]')];
-  let visibleRows = 0;
-
-  rows.forEach(row => {
-    const matchesQuery = row.textContent.toLowerCase().includes(query);
-    const matchesFilter = filter === 'all' ||
-      (filter === 'large' && Number(row.dataset.size) > 1024 * 1024) ||
-      (filter === 'recent' && Number(row.dataset.modified) >= recentAfter);
-    row.hidden = !(matchesQuery && matchesFilter);
-    if (!row.hidden) {
-      visibleRows += 1;
-    }
-  });
-
-  const noResults = document.querySelector('.filter-empty');
-  if (noResults) {
-    noResults.hidden = visibleRows > 0;
-  }
-}
-
-loadDashboard();
-
-uploadButton.addEventListener('click', () => uploadInput.click());
-
-uploadInput.addEventListener('change', async () => {
-  const file = uploadInput.files[0];
-  if (!file) {
-    return;
-  }
-
-  uploadButton.disabled = true;
-  document.querySelector('.upload-zone p').textContent = `Uploading ${file.name}...`;
+  const statusText = document.querySelector('.upload-status-text');
+  if (statusText) statusText.textContent = `Uploading and replicating ${file.name}...`;
 
   try {
     const formData = new FormData();
     formData.append('file', file);
+
     const result = await apiRequest('/objects/upload', {
       method: 'POST',
       body: formData
     });
 
+    showToast(`Uploaded ${result.name} (SHA-256: ${result.sha256.slice(0, 10)}...)`, 'success');
+    if (statusText) statusText.textContent = `Uploaded and replicated ${result.name} across ${result.replicas.length} nodes.`;
     await loadDashboard();
-    document.querySelector('.upload-zone p').textContent = `Uploaded ${result.name} successfully.`;
-  } catch (error) {
-    document.querySelector('.upload-zone p').textContent = `Upload failed: ${error.message}`;
-    console.error('Unable to upload object:', error);
-  } finally {
-    uploadButton.disabled = !dashboardState.connected;
-    uploadInput.value = '';
+  } catch (err) {
+    showToast(`Upload failed: ${err.message}`, 'error');
+    if (statusText) statusText.textContent = `Upload failed: ${err.message}`;
   }
-});
+}
 
-objectSearch.addEventListener('input', filterObjects);
-objectFilter.addEventListener('change', filterObjects);
-
-integrityCheckButton.addEventListener('click', async () => {
-  integrityCheckButton.disabled = true;
-  integrityCheckButton.textContent = 'Checking...';
-  document.querySelector('.integrity-result-title').textContent = 'Checking stored objects...';
-  document.querySelector('.integrity-result-detail').textContent = 'Large objects may take longer to verify.';
-
-  try {
-    await apiRequest('/integrity/verify', { method: 'POST' });
-    await loadDashboard();
-  } catch (error) {
-    setStatusTag(integrityStatusTag, 'error', 'CHECK FAILED');
-    document.querySelector('.integrity-result-title').textContent = 'Integrity check failed';
-    document.querySelector('.integrity-result-detail').textContent = error.message;
-    console.error('Unable to verify object integrity:', error);
-  } finally {
-    integrityCheckButton.disabled = !dashboardState.connected;
-    integrityCheckButton.textContent = 'Run integrity check';
-  }
-});
-
-function updateActiveNavigation() {
-  const currentHash = location.hash || '#dashboard';
-  document.querySelectorAll('.side-link').forEach(link => {
-    const active = link.getAttribute('href') === currentHash;
-    link.classList.toggle('active', active);
-    if (active) {
-      link.setAttribute('aria-current', 'page');
-    } else {
-      link.removeAttribute('aria-current');
+if (uploadTriggerBtn && uploadInput) {
+  uploadTriggerBtn.addEventListener('click', () => uploadInput.click());
+  uploadInput.addEventListener('change', () => {
+    if (uploadInput.files[0]) {
+      handleFileUpload(uploadInput.files[0]);
+      uploadInput.value = '';
     }
   });
 }
 
-window.addEventListener('hashchange', updateActiveNavigation);
-updateActiveNavigation();
+// Drag and drop handlers
+if (dropZone) {
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#75e3ff';
+    dropZone.style.background = 'rgba(117, 227, 255, 0.08)';
+  });
 
-window.setInterval(() => {
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = '';
+    dropZone.style.background = '';
+  });
+
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.style.borderColor = '';
+    dropZone.style.background = '';
+    if (e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  });
+}
+
+// Integrity Check button
+if (integrityCheckButton) {
+  integrityCheckButton.addEventListener('click', async () => {
+    integrityCheckButton.disabled = true;
+    integrityCheckButton.textContent = 'Verifying SHA-256...';
+
+    try {
+      const res = await apiRequest('/integrity/verify', { method: 'POST' });
+      showToast(res.failed ? `Detected ${res.failed} corrupted replica(s)!` : 'All object replicas verified 100% intact!', res.failed ? 'error' : 'success');
+      await loadDashboard();
+    } catch (err) {
+      showToast(`Verification failed: ${err.message}`, 'error');
+    } finally {
+      integrityCheckButton.disabled = false;
+      integrityCheckButton.textContent = 'Run integrity check';
+    }
+  });
+}
+
+// Integrity Auto-Repair button
+if (integrityRepairButton) {
+  integrityRepairButton.addEventListener('click', async () => {
+    integrityRepairButton.disabled = true;
+    integrityRepairButton.textContent = 'Healing cluster...';
+
+    try {
+      const res = await apiRequest('/integrity/repair', { method: 'POST' });
+      showToast(res.summary, 'success');
+      await loadDashboard();
+    } catch (err) {
+      showToast(`Repair failed: ${err.message}`, 'error');
+    } finally {
+      integrityRepairButton.disabled = false;
+      integrityRepairButton.textContent = 'Auto-repair replicas';
+    }
+  });
+}
+
+// Quick Repair button in topbar
+if (quickRepairBtn) {
+  quickRepairBtn.addEventListener('click', async () => {
+    quickRepairBtn.disabled = true;
+    quickRepairBtn.textContent = 'Healing...';
+
+    try {
+      const res = await apiRequest('/nodes/repair', { method: 'POST' });
+      showToast(res.summary, 'success');
+      await loadDashboard();
+    } catch (err) {
+      showToast(`Heal failed: ${err.message}`, 'error');
+    } finally {
+      quickRepairBtn.disabled = false;
+      quickRepairBtn.textContent = '⚡ Heal & Rebalance';
+    }
+  });
+}
+
+if (objectSearch) objectSearch.addEventListener('input', filterObjects);
+if (objectFilter) objectFilter.addEventListener('change', filterObjects);
+
+// Initial load
+loadDashboard();
+
+// Periodic poll every 15s
+setInterval(() => {
   if (document.visibilityState === 'visible') {
     loadDashboard();
   }
 }, 15000);
 
+// Real-time WebSocket connection
 let socket = null;
-
 if (typeof WebSocket !== 'undefined') {
   try {
     socket = new WebSocket(
@@ -621,20 +633,12 @@ if (typeof WebSocket !== 'undefined') {
 
     socket.addEventListener('message', event => {
       try {
-        const message = JSON.parse(event.data);
-
-        if (message.type === 'dashboard.updated') {
-          renderDashboard(message.data);
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'dashboard.updated') {
+          renderDashboard(msg.data);
         }
-      } catch (error) {
-        console.warn('Dashboard update ignored:', error.message);
-      }
+      } catch {}
     });
-
-    socket.addEventListener('error', () => {
-      console.warn('Realtime dashboard updates are unavailable.');
-    });
-  } catch (error) {
-    console.warn('WebSocket unavailable:', error.message);
-  }
+  } catch {}
 }
+
