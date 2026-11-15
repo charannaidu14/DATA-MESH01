@@ -16,11 +16,16 @@ const initialUploadMessage = document.querySelector('.upload-zone p').textConten
 const uploadButton = document.querySelector('.upload-zone button');
 const uploadInput = document.querySelector('.object-upload-input');
 const objectSearch = document.querySelector('.search-box input');
+const objectFilter = document.querySelector('.filter-select');
 const nodeHealthTag = document.querySelector('.node-health-tag');
 const replicationTag = document.querySelector('.replication-status-tag');
 const recoveryTag = document.querySelector('.recovery-status-tag');
 const recoveryWorkflowTag = document.querySelector('.recovery-workflow-tag');
 const rebalanceTag = document.querySelector('.rebalance-status-tag');
+const uploadStatusTag = document.querySelector('.upload-status-tag');
+const integrityStatusTag = document.querySelector('.integrity-status-tag');
+const activityStatusTag = document.querySelector('.activity-status-tag');
+const integrityCheckButton = document.querySelector('.integrity-check-button');
 let dashboardRequestInFlight = false;
 
 async function apiRequest(endpoint, options = {}) {
@@ -34,11 +39,12 @@ async function apiRequest(endpoint, options = {}) {
     headers
   });
 
+  const result = await response.json();
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    throw new Error(result.error || `API request failed: ${response.status}`);
   }
 
-  return response.json();
+  return result;
 }
 
 async function loadDashboard() {
@@ -89,8 +95,12 @@ function renderDashboard(data) {
     uploadButton.disabled = true;
     uploadInput.disabled = true;
     objectSearch.disabled = true;
+    objectFilter.disabled = true;
+    integrityCheckButton.disabled = true;
     objectSearch.value = '';
+    objectFilter.value = 'all';
     objectMeta.textContent = 'Connect a cluster to browse objects';
+    setStatusTag(uploadStatusTag, 'disabled', 'INACTIVE');
   } else {
     connectionBadge.innerHTML = '<i aria-hidden="true"></i> Connected';
     bannerTag.className = 'state-tag state-real';
@@ -104,15 +114,20 @@ function renderDashboard(data) {
     uploadButton.disabled = false;
     uploadInput.disabled = false;
     objectSearch.disabled = false;
+    objectFilter.disabled = false;
+    integrityCheckButton.disabled = false;
     objectMeta.textContent = `${(data.objects || []).length} object(s) in ${data.bucket || 'storage bucket'}`;
+    setStatusTag(uploadStatusTag, 'real', 'ACTIVE');
   }
 
   updateMetrics(data.overview || {});
+  updateCapacity(data.nodes || [], connected);
   renderNodes(data.nodes || []);
   renderObjects(data.objects || []);
   renderActivity(data.activity || []);
   renderReplication(data.replication, data.nodes || []);
   renderRecovery(data.recovery);
+  renderIntegrity(data.integrity);
   renderRebalance(data.rebalance);
 }
 
@@ -129,6 +144,48 @@ function updateMetrics(overview = {}) {
   document.querySelectorAll('.metric-value').forEach((element, index) => {
     element.textContent = values[index] ?? '—';
   });
+}
+
+function updateCapacity(nodes, connected) {
+  const tag = document.querySelector('.capacity-status-tag');
+  const usage = document.querySelector('.usage-ring span');
+  const title = document.querySelector('.capacity-summary-title');
+  const detail = document.querySelector('.capacity-summary-detail');
+  const used = document.querySelector('.capacity-used');
+  const available = document.querySelector('.capacity-available');
+  const note = document.querySelector('.capacity-note span:last-child');
+  const volume = nodes.find(node => node.capacity && node.availableCapacity);
+
+  if (!connected) {
+    setStatusTag(tag, 'disconnected', 'NO DATA');
+    usage.textContent = '—';
+    title.textContent = 'Capacity details will appear here';
+    detail.textContent = 'Connect Docker-backed storage to read the MinIO data volume filesystem.';
+    used.textContent = '—';
+    available.textContent = '—';
+    note.textContent = 'Capacity data is unavailable until a Docker-backed MinIO volume reports it.';
+    return;
+  }
+
+  if (!volume) {
+    setStatusTag(tag, 'empty', 'NOT REPORTED');
+    usage.textContent = '—';
+    title.textContent = 'Volume capacity not reported';
+    detail.textContent = 'MinIO is connected, but Docker did not report a data-volume filesystem.';
+    used.textContent = '—';
+    available.textContent = '—';
+    note.textContent = 'Capacity telemetry is unavailable for this storage configuration.';
+    return;
+  }
+
+  const usagePercent = volume.usagePercent || '—';
+  setStatusTag(tag, 'real', `${usagePercent} USED`);
+  usage.textContent = usagePercent;
+  title.textContent = `MinIO data volume (${volume.name})`;
+  detail.textContent = `Docker-reported filesystem capacity: ${volume.capacity}. This is one node volume, not cluster usable capacity.`;
+  used.textContent = volume.usedCapacity || '—';
+  available.textContent = volume.availableCapacity || '—';
+  note.textContent = 'Filesystem capacity is reported per MinIO node; do not sum volumes when they share the same Docker filesystem.';
 }
 
 function renderNodes(nodes) {
@@ -154,10 +211,12 @@ function renderNodes(nodes) {
       ${nodes.map(node => `
         <article class="node-row">
           <strong>${escapeHtml(node.name)}</strong>
-          <span>${escapeHtml(node.status)}</span>
-          <span>CPU: ${formatUsage(node.cpu)}</span>
-          <span>Memory: ${formatUsage(node.memory)}</span>
-          <span>Disk: ${formatUsage(node.disk)}</span>
+          <span>Status: ${escapeHtml(node.status)}</span>
+          <span>CPU: ${escapeHtml(node.cpu ?? '—')}</span>
+          <span>Memory: ${escapeHtml(node.memory ?? '—')}</span>
+          <span>Volume: ${escapeHtml(node.usedCapacity ?? '—')} used / ${escapeHtml(node.capacity ?? '—')}</span>
+          <span>Disk I/O: ${formatIo(node.disk, 'read', 'written')}</span>
+          <span>Network I/O: ${formatIo(node.network, 'received', 'sent')}</span>
         </article>
       `).join('')}
     </div>
@@ -195,19 +254,25 @@ function renderObjects(objects) {
     </div>
 
     ${objects.map(object => `
-      <div class="table-row">
+      <div class="table-row" data-size="${Number(object.sizeBytes) || 0}" data-modified="${Date.parse(object.lastModified) || 0}">
         <span>${escapeHtml(object.name)}</span>
         <span>${escapeHtml(object.size)}</span>
         <span>${escapeHtml(object.lastModified)}</span>
         <span>${escapeHtml(object.status)}</span>
       </div>
     `).join('')}
+    <div class="table-empty filter-empty" hidden><strong>No objects match these filters</strong><p>Change the search or filter and try again.</p></div>
   `;
   filterObjects();
 }
 
 function renderActivity(events) {
   const panel = document.querySelector('.activity-panel');
+  setStatusTag(
+    activityStatusTag,
+    events.length ? 'real' : 'empty',
+    events.length ? `${events.length} EVENT${events.length === 1 ? '' : 'S'}` : 'NO EVENTS'
+  );
 
   if (!events.length) {
     panel.innerHTML = initialActivityContent;
@@ -233,6 +298,65 @@ function renderActivity(events) {
   `;
 }
 
+function renderIntegrity(integrity) {
+  const checkCount = document.querySelector('.integrity-check-count');
+  const checkCaption = document.querySelector('.integrity-check-caption');
+  const checkStatus = document.querySelector('.integrity-check-status');
+  const corruptionStatus = document.querySelector('.integrity-corruption-status');
+  const checksumDetails = document.querySelector('.integrity-checksum-details');
+  const resultTitle = document.querySelector('.integrity-result-title');
+  const resultDetail = document.querySelector('.integrity-result-detail');
+
+  if (!integrity || !dashboardState.connected) {
+    setStatusTag(integrityStatusTag, 'disconnected', 'UNAVAILABLE');
+    checkCount.textContent = '—';
+    checkCaption.textContent = 'Storage backend required';
+    checkStatus.textContent = 'Not available';
+    corruptionStatus.textContent = 'Not available';
+    checksumDetails.textContent = '—';
+    resultTitle.textContent = 'Verification results are unavailable';
+    resultDetail.textContent = 'Connect a storage cluster to check object contents.';
+    return;
+  }
+
+  if (integrity.status === 'not-checked') {
+    setStatusTag(integrityStatusTag, 'empty', 'NOT CHECKED');
+    checkCount.textContent = '0';
+    checkCaption.textContent = `${integrity.totalObjects || 0} object(s) awaiting verification`;
+    checkStatus.textContent = 'Not checked';
+    corruptionStatus.textContent = 'Not checked';
+    checksumDetails.textContent = 'SHA-256 / ETag';
+    resultTitle.textContent = 'Verification has not run yet';
+    resultDetail.textContent = integrity.detail;
+    return;
+  }
+
+  if (integrity.status === 'empty') {
+    setStatusTag(integrityStatusTag, 'empty', 'NO OBJECTS');
+    checkCount.textContent = '0';
+    checkCaption.textContent = 'No objects to verify';
+    checkStatus.textContent = 'No objects';
+    corruptionStatus.textContent = 'No objects';
+    checksumDetails.textContent = '—';
+    resultTitle.textContent = 'There are no objects to verify';
+    resultDetail.textContent = integrity.detail;
+    return;
+  }
+
+  const failed = Number(integrity.failed) || 0;
+  const unverified = Number(integrity.unverified) || 0;
+  const state = failed ? 'error' : unverified ? 'empty' : 'real';
+  const label = failed ? 'ISSUES FOUND' : unverified ? 'PARTIAL' : 'VERIFIED';
+  setStatusTag(integrityStatusTag, state, label);
+  checkCount.textContent = `${integrity.passed}/${integrity.totalObjects}`;
+  checkCaption.textContent = `${integrity.checked} checked; ${unverified} unverified`;
+  checkStatus.textContent = failed ? 'Issues found' : unverified ? 'Partially verified' : 'All verified';
+  corruptionStatus.textContent = failed ? `${failed} issue(s)` : 'No mismatches';
+  checksumDetails.textContent = 'SHA-256 / ETag';
+  resultTitle.textContent = failed ? 'Integrity issues require attention' : 'Integrity check complete';
+  resultDetail.textContent = integrity.detail || 'No verification details returned.';
+}
+
 function renderReplication(replication, nodes) {
   const topology = document.querySelector('#replication-topology');
   const detail = document.querySelector('.replication-detail');
@@ -246,7 +370,7 @@ function renderReplication(replication, nodes) {
   }
 
   const healthy = replication.health === 'healthy';
-  setStatusTag(replicationTag, healthy ? 'real' : 'error', healthy ? 'HEALTHY' : 'DEGRADED');
+  setStatusTag(replicationTag, healthy ? 'real' : 'error', healthy ? 'CLUSTER READY' : 'DEGRADED');
   topology.setAttribute('aria-label', `${replication.mode}; ${replication.healthyNodes} of ${replication.totalNodes} nodes healthy`);
   topology.innerHTML = nodes.map(node => `
     <div class="topology-node">
@@ -306,6 +430,15 @@ function renderRebalance(rebalance) {
     return;
   }
 
+  if (rebalance.status === 'unavailable') {
+    setStatusTag(rebalanceTag, 'disconnected', 'NOT REPORTED');
+    document.querySelector('.rebalance-title').textContent = 'Rebalance telemetry unavailable';
+    document.querySelector('.rebalance-detail').textContent = rebalance.detail;
+    document.querySelector('.rebalance-nodes').textContent = `${rebalance.healthyNodes}/${rebalance.totalNodes}`;
+    document.querySelector('.rebalance-history').textContent = 'Not exposed by S3 API';
+    return;
+  }
+
   const healthy = rebalance.status === 'healthy';
   setStatusTag(rebalanceTag, healthy ? 'real' : 'error', healthy ? 'CLUSTER HEALTHY' : 'ATTENTION REQUIRED');
   document.querySelector('.rebalance-title').textContent = 'MinIO distributed erasure-coded placement';
@@ -315,7 +448,18 @@ function renderRebalance(rebalance) {
 }
 
 function setStatusTag(element, state, label) {
-  element.classList.remove('state-real', 'state-error', 'state-empty', 'state-disconnected');
+  if (!element) {
+    return;
+  }
+
+  element.classList.remove(
+    'state-real',
+    'state-error',
+    'state-empty',
+    'state-loading',
+    'state-disabled',
+    'state-disconnected'
+  );
   element.classList.add(`state-${state}`);
   element.textContent = label;
 }
@@ -344,15 +488,41 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-function formatUsage(value) {
-  return value == null ? '—' : `${escapeHtml(value)}%`;
+function formatIo(value, firstLabel, secondLabel) {
+  if (!value) {
+    return '—';
+  }
+
+  const [first, ...rest] = String(value).split('/');
+  if (!rest.length) {
+    return escapeHtml(value);
+  }
+
+  return `${escapeHtml(first.trim())} ${firstLabel} / ${escapeHtml(rest.join('/').trim())} ${secondLabel}`;
 }
 
 function filterObjects() {
   const query = objectSearch.value.trim().toLowerCase();
-  document.querySelectorAll('.data-table .table-row:not(.table-header)').forEach(row => {
-    row.hidden = !row.textContent.toLowerCase().includes(query);
+  const filter = objectFilter.value;
+  const recentAfter = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const rows = [...document.querySelectorAll('.data-table .table-row[data-size]')];
+  let visibleRows = 0;
+
+  rows.forEach(row => {
+    const matchesQuery = row.textContent.toLowerCase().includes(query);
+    const matchesFilter = filter === 'all' ||
+      (filter === 'large' && Number(row.dataset.size) > 1024 * 1024) ||
+      (filter === 'recent' && Number(row.dataset.modified) >= recentAfter);
+    row.hidden = !(matchesQuery && matchesFilter);
+    if (!row.hidden) {
+      visibleRows += 1;
+    }
   });
+
+  const noResults = document.querySelector('.filter-empty');
+  if (noResults) {
+    noResults.hidden = visibleRows > 0;
+  }
 }
 
 loadDashboard();
@@ -388,6 +558,43 @@ uploadInput.addEventListener('change', async () => {
 });
 
 objectSearch.addEventListener('input', filterObjects);
+objectFilter.addEventListener('change', filterObjects);
+
+integrityCheckButton.addEventListener('click', async () => {
+  integrityCheckButton.disabled = true;
+  integrityCheckButton.textContent = 'Checking...';
+  document.querySelector('.integrity-result-title').textContent = 'Checking stored objects...';
+  document.querySelector('.integrity-result-detail').textContent = 'Large objects may take longer to verify.';
+
+  try {
+    await apiRequest('/integrity/verify', { method: 'POST' });
+    await loadDashboard();
+  } catch (error) {
+    setStatusTag(integrityStatusTag, 'error', 'CHECK FAILED');
+    document.querySelector('.integrity-result-title').textContent = 'Integrity check failed';
+    document.querySelector('.integrity-result-detail').textContent = error.message;
+    console.error('Unable to verify object integrity:', error);
+  } finally {
+    integrityCheckButton.disabled = !dashboardState.connected;
+    integrityCheckButton.textContent = 'Run integrity check';
+  }
+});
+
+function updateActiveNavigation() {
+  const currentHash = location.hash || '#dashboard';
+  document.querySelectorAll('.side-link').forEach(link => {
+    const active = link.getAttribute('href') === currentHash;
+    link.classList.toggle('active', active);
+    if (active) {
+      link.setAttribute('aria-current', 'page');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+}
+
+window.addEventListener('hashchange', updateActiveNavigation);
+updateActiveNavigation();
 
 window.setInterval(() => {
   if (document.visibilityState === 'visible') {

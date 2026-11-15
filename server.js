@@ -1,11 +1,15 @@
 const express = require('express');
 const http = require('http');
 const https = require('https');
+const { createHash } = require('crypto');
+const { execFile } = require('child_process');
 const Minio = require('minio');
 const multer = require('multer');
+const { promisify } = require('util');
 const { WebSocketServer } = require('ws');
 
 const app = express();
+const execFileAsync = promisify(execFile);
 const PORT = Number(process.env.PORT || 3000);
 const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || 'localhost';
 const MINIO_PORT = Number(process.env.MINIO_PORT || 9001);
@@ -32,6 +36,14 @@ const BUCKET_NAME = process.env.MINIO_BUCKET || 'data-mesh-bucket';
 const dashboardSubscribers = new Set();
 const previousNodeStatuses = new Map();
 const recoveryEvents = [];
+const activityEvents = [];
+let lastIntegrityResult = null;
+let lastIntegrityFingerprint = null;
+let previousClusterHealth = null;
+let availabilitySample = null;
+let availabilityObservedMs = 0;
+let availabilityHealthyMs = 0;
+const previousBlockIo = new Map();
 
 function buildDisconnectedDashboard() {
   return {
@@ -46,7 +58,16 @@ function buildDisconnectedDashboard() {
     },
     nodes: [],
     objects: [],
-    activity: [],
+    activity: activityEvents,
+    integrity: {
+      status: 'unavailable',
+      totalObjects: 0,
+      checked: 0,
+      passed: 0,
+      failed: 0,
+      unverified: 0,
+      detail: 'Integrity verification is unavailable while the storage cluster is disconnected.'
+    },
     replication: {
       mode: null,
       healthyNodes: 0,
@@ -80,6 +101,14 @@ function broadcastDashboardUpdate(data) {
   }
 }
 
+function recordActivity(event) {
+  activityEvents.unshift({
+    ...event,
+    time: event.time || new Date().toISOString()
+  });
+  activityEvents.splice(20);
+}
+
 async function ensureBucket() {
   try {
     const exists = await minioClient.bucketExists(BUCKET_NAME);
@@ -92,24 +121,256 @@ async function ensureBucket() {
     console.log(`Bucket "${BUCKET_NAME}" already exists.`);
     return true;
   } catch (err) {
-    console.warn(`MinIO bucket check skipped: ${err.message}`);
+    const message = err && err.message ? err.message : String(err || 'Unknown MinIO error');
+    console.warn(`MinIO bucket check skipped: ${message}`);
     return false;
   }
 }
 
+function normalizeMinioEndpoint(endpoint) {
+  const value = String(endpoint || '').trim();
+  if (!value) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value.replace(/\/$/, '');
+  }
+
+  return value.replace(/\/$/, '');
+}
+
 function checkMinioHealth(endpoint, path) {
   return new Promise(resolve => {
-    const url = new URL(`${MINIO_USE_SSL ? 'https' : 'http'}://${endpoint}${path}`);
+    const normalizedEndpoint = normalizeMinioEndpoint(endpoint);
+    if (!normalizedEndpoint) {
+      resolve(false);
+      return;
+    }
+
+    const url = new URL(`${MINIO_USE_SSL ? 'https' : 'http'}://${normalizedEndpoint}${path}`);
     const request = healthHttpClient.get(url, response => {
       response.resume();
       resolve(response.statusCode === 200);
     });
 
     request.setTimeout(3000, () => {
-      request.destroy(new Error(`Health check timed out for ${endpoint}`));
+      request.destroy(new Error(`Health check timed out for ${normalizedEndpoint}`));
     });
     request.on('error', () => resolve(false));
   });
+}
+
+function parseDockerFilesystem(output) {
+  const line = output.trim().split(/\r?\n/).pop();
+  if (!line) {
+    return null;
+  }
+
+  const columns = line.trim().split(/\s+/);
+  if (columns.length < 6 || !/^\d+$/.test(columns[1])) {
+    return null;
+  }
+
+  return {
+    capacityBytes: Number(columns[1]) * 1024,
+    usedBytes: Number(columns[2]) * 1024,
+    availableBytes: Number(columns[3]) * 1024,
+    usagePercent: columns[4]
+  };
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return 'Not reported';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(unitIndex ? 1 : 0)} ${units[unitIndex]}`;
+}
+
+function parseDockerByteCount(value) {
+  const match = String(value).trim().match(/^([\d.]+)\s*(B|kB|MB|GB|TB|KiB|MiB|GiB|TiB)$/i);
+  if (!match) {
+    return null;
+  }
+
+  const unit = match[2];
+  const base = /iB$/i.test(unit) ? 1024 : 1000;
+  const exponent = { b: 0, kb: 1, mb: 2, gb: 3, tb: 4, kib: 1, mib: 2, gib: 3, tib: 4 }[unit.toLowerCase()];
+  return Number(match[1]) * base ** exponent;
+}
+
+function parseDockerIoCounters(value) {
+  const [readText, writeText] = String(value || '').split('/');
+  const read = parseDockerByteCount(readText || '');
+  const written = parseDockerByteCount(writeText || '');
+  return read == null || written == null ? null : { read, written };
+}
+
+function formatRate(bytesPerSecond) {
+  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) {
+    return 'Collecting';
+  }
+
+  const units = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+  let value = bytesPerSecond;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(unitIndex ? 2 : 0)} ${units[unitIndex]}`;
+}
+
+function recordAvailabilitySample(healthy, sampledAt = Date.now()) {
+  if (availabilitySample) {
+    const elapsed = sampledAt - availabilitySample.sampledAt;
+    if (elapsed > 0 && elapsed <= 30000) {
+      availabilityObservedMs += elapsed;
+      if (availabilitySample.healthy) {
+        availabilityHealthyMs += elapsed;
+      }
+    }
+  }
+
+  availabilitySample = { healthy, sampledAt };
+  return availabilityObservedMs
+    ? `${(availabilityHealthyMs / availabilityObservedMs * 100).toFixed(2)}%`
+    : 'Collecting';
+}
+
+function getStorageThroughput(statsByService, sampledAt = Date.now()) {
+  let bytesPerSecond = 0;
+  let sampledNodes = 0;
+
+  for (const [service, stats] of statsByService) {
+    const totals = parseDockerIoCounters(stats.disk);
+    if (!totals) {
+      continue;
+    }
+
+    const previous = previousBlockIo.get(service);
+    previousBlockIo.set(service, { ...totals, sampledAt });
+    if (!previous) {
+      continue;
+    }
+
+    const elapsed = (sampledAt - previous.sampledAt) / 1000;
+    if (elapsed <= 0 || elapsed > 60) {
+      continue;
+    }
+
+    const bytesRead = Math.max(0, totals.read - previous.read);
+    const bytesWritten = Math.max(0, totals.written - previous.written);
+    bytesPerSecond += (bytesRead + bytesWritten) / elapsed;
+    sampledNodes += 1;
+  }
+
+  return sampledNodes ? formatRate(bytesPerSecond) : 'Collecting';
+}
+
+async function getDockerNodeStats() {
+  const options = {
+    cwd: __dirname,
+    timeout: 10000,
+    maxBuffer: 1024 * 1024,
+    windowsHide: true
+  };
+  const { stdout: composeOutput } = await execFileAsync(
+    'docker',
+    ['compose', 'ps', '--format', 'json'],
+    options
+  );
+  const containers = composeOutput
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map(line => JSON.parse(line))
+    .filter(container => container.State === 'running' && /^minio\d+$/.test(container.Service));
+
+  if (!containers.length) {
+    return new Map();
+  }
+
+  const { stdout: statsOutput } = await execFileAsync(
+    'docker',
+    ['stats', '--no-stream', '--format', '{{json .}}', ...containers.map(container => container.Name)],
+    options
+  );
+  const statsByName = new Map(
+    statsOutput
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map(line => {
+        const stats = JSON.parse(line);
+        return [stats.Name, stats];
+      })
+  );
+
+  const volumesByName = new Map(await Promise.all(containers.map(async container => {
+    try {
+      const { stdout } = await execFileAsync(
+        'docker',
+        ['exec', container.Name, 'df', '-Pk', '/bitnami/minio/data'],
+        options
+      );
+      return [container.Name, parseDockerFilesystem(stdout)];
+    } catch (err) {
+      const message = err && err.message ? err.message : String(err || 'Unknown Docker volume error');
+      console.warn(`Docker volume metrics unavailable for ${container.Name}:`, message);
+      return [container.Name, null];
+    }
+  })));
+
+  return new Map(containers.map(container => {
+    const nodeStats = statsByName.get(container.Name);
+    const volumeStats = volumesByName.get(container.Name);
+    const publishedPorts = (container.Publishers || [])
+      .map(publisher => Number(publisher.PublishedPort))
+      .filter(Boolean);
+
+    return [container.Service, {
+      publishedPorts,
+      cpu: nodeStats ? nodeStats.CPUPerc : null,
+      memory: nodeStats ? nodeStats.MemPerc : null,
+      disk: nodeStats ? nodeStats.BlockIO : null,
+      network: nodeStats ? nodeStats.NetIO : null,
+      capacityBytes: volumeStats ? volumeStats.capacityBytes : null,
+      usedBytes: volumeStats ? volumeStats.usedBytes : null,
+      availableBytes: volumeStats ? volumeStats.availableBytes : null,
+      usagePercent: volumeStats ? volumeStats.usagePercent : null
+    }];
+  }));
+}
+
+function getNodeStats(endpoint, statsByService) {
+  let url;
+  try {
+    const value = /^https?:\/\//i.test(endpoint) ? endpoint : `http://${endpoint}`;
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+
+  const serviceMatch = url.hostname.match(/^minio\d+$/i);
+  if (serviceMatch) {
+    return statsByService.get(url.hostname.toLowerCase()) || null;
+  }
+
+  const port = Number(url.port || (url.protocol === 'https:' ? 443 : 80));
+  for (const stats of statsByService.values()) {
+    if (stats.publishedPorts.includes(port)) {
+      return stats;
+    }
+  }
+
+  return null;
 }
 
 function recordNodeHealthChanges(nodes) {
@@ -134,9 +395,106 @@ function recordNodeHealthChanges(nodes) {
         ? `${node.name} is reachable again`
         : `${node.name} is ${node.status}`
     });
+    recordActivity(recoveryEvents[0]);
   }
 
   recoveryEvents.splice(20);
+}
+
+function listBucketObjects() {
+  const objects = [];
+  const stream = minioClient.listObjects(BUCKET_NAME, '', true);
+
+  return new Promise((resolve, reject) => {
+    stream.on('data', object => {
+      objects.push(object);
+    });
+    stream.on('end', () => resolve(objects));
+    stream.on('error', reject);
+  });
+}
+
+function getObjectFingerprint(objects) {
+  const entries = objects
+    .map(object => `${object.name}\0${object.size}\0${String(object.lastModified || '')}`)
+    .sort();
+  return createHash('sha256').update(entries.join('\n')).digest('hex');
+}
+
+async function hashStoredObject(objectName, algorithm) {
+  const stream = await minioClient.getObject(BUCKET_NAME, objectName);
+  const hash = createHash(algorithm);
+
+  await new Promise((resolve, reject) => {
+    stream.on('data', chunk => hash.update(chunk));
+    stream.on('end', resolve);
+    stream.on('error', reject);
+  });
+
+  return hash.digest('hex');
+}
+
+async function verifyBucketIntegrity() {
+  const objects = await listBucketObjects();
+  const fingerprint = getObjectFingerprint(objects);
+  const result = {
+    status: 'healthy',
+    totalObjects: objects.length,
+    checked: 0,
+    passed: 0,
+    failed: 0,
+    unverified: 0,
+    checkedAt: new Date().toISOString(),
+    details: []
+  };
+
+  for (const object of objects) {
+    try {
+      const stat = await minioClient.statObject(BUCKET_NAME, object.name);
+      const metadata = stat.metaData || {};
+      const expectedSha256 = metadata['x-amz-meta-sha256'] || metadata.sha256;
+      const etag = String(stat.etag || '').replaceAll('"', '').toLowerCase();
+      const algorithm = expectedSha256 ? 'sha256' : (/^[a-f0-9]{32}$/.test(etag) ? 'md5' : null);
+      const expected = expectedSha256 || (algorithm === 'md5' ? etag : null);
+
+      if (!algorithm || !expected) {
+        result.unverified += 1;
+        result.details.push({ name: object.name, status: 'unverified' });
+        continue;
+      }
+
+      const actual = await hashStoredObject(object.name, algorithm);
+      const passed = actual === expected.toLowerCase();
+      result.checked += 1;
+      result[passed ? 'passed' : 'failed'] += 1;
+      result.details.push({
+        name: object.name,
+        status: passed ? 'verified' : 'mismatch',
+        algorithm,
+        checksum: actual
+      });
+    } catch (error) {
+      result.failed += 1;
+      result.details.push({
+        name: object.name,
+        status: 'error',
+        message: error.message
+      });
+    }
+  }
+
+  result.status = !result.totalObjects
+    ? 'empty'
+    : result.failed
+      ? 'attention'
+      : result.unverified
+        ? 'partial'
+        : 'healthy';
+  result.detail = result.totalObjects
+    ? `${result.passed} verified, ${result.failed} failed, ${result.unverified} unverified of ${result.totalObjects} object(s).`
+    : 'No objects are available to verify.';
+  result.details = result.details.slice(0, 50);
+  return { result, fingerprint };
 }
 
 app.get('/api/health', (req, res) => {
@@ -154,30 +512,45 @@ app.get('/api/dashboard', async (req, res) => {
     }
 
     await minioClient.listBuckets();
-    const objects = [];
-    const stream = minioClient.listObjects(BUCKET_NAME, '', true);
+    const storedObjects = await listBucketObjects();
+    const objectFingerprint = getObjectFingerprint(storedObjects);
+    if (lastIntegrityFingerprint && lastIntegrityFingerprint !== objectFingerprint) {
+      lastIntegrityResult = null;
+      lastIntegrityFingerprint = null;
+    }
+    const objects = storedObjects.map(object => ({
+      name: object.name,
+      size: `${(object.size / 1024).toFixed(2)} KB`,
+      sizeBytes: object.size,
+      lastModified: object.lastModified,
+      status: 'available'
+    }));
 
-    await new Promise((resolve, reject) => {
-      stream.on('data', obj => {
-        objects.push({
-          name: obj.name,
-          size: `${(obj.size / 1024).toFixed(2)} KB`,
-          lastModified: obj.lastModified,
-          status: 'available'
-        });
-      });
-      stream.on('end', resolve);
-      stream.on('error', reject);
-    });
+    let dockerStats = new Map();
+    try {
+      dockerStats = await getDockerNodeStats();
+    } catch (err) {
+      const message = err && err.message ? err.message : String(err || 'Unknown Docker stats error');
+      console.warn('Docker node metrics unavailable:', message);
+    }
 
     const nodes = await Promise.all(MINIO_NODE_ENDPOINTS.map(async endpoint => {
       const healthy = await checkMinioHealth(endpoint, '/minio/health/live');
+      const stats = getNodeStats(endpoint, dockerStats);
       return {
         name: endpoint,
         status: healthy ? 'healthy' : 'unavailable',
-        cpu: null,
-        memory: null,
-        disk: null
+        cpu: stats ? stats.cpu : null,
+        memory: stats ? stats.memory : null,
+        disk: stats ? stats.disk : null,
+        network: stats ? stats.network : null,
+        capacityBytes: stats ? stats.capacityBytes : null,
+        usedBytes: stats ? stats.usedBytes : null,
+        availableBytes: stats ? stats.availableBytes : null,
+        usagePercent: stats ? stats.usagePercent : null,
+        capacity: stats ? formatBytes(stats.capacityBytes) : null,
+        usedCapacity: stats ? formatBytes(stats.usedBytes) : null,
+        availableCapacity: stats ? formatBytes(stats.availableBytes) : null
       };
     }));
     recordNodeHealthChanges(nodes);
@@ -187,18 +560,34 @@ app.get('/api/dashboard', async (req, res) => {
       '/minio/health/cluster'
     );
     const clusterHealthy = clusterResponding && healthyNodeCount === nodes.length;
+    const volumeNode = nodes.find(node => Number.isFinite(node.capacityBytes));
+    const systemAvailability = recordAvailabilitySample(clusterHealthy);
+    const storageThroughput = dockerStats.size
+      ? getStorageThroughput(dockerStats)
+      : 'Not reported';
     const clusterDetail = 'MinIO health endpoints report node reachability and cluster readiness. The S3 API does not expose per-object shard maps, active healing jobs, or rebalance history.';
+    if (previousClusterHealth !== clusterHealthy) {
+      recordActivity({
+        type: 'cluster health',
+        status: clusterHealthy ? 'ok' : 'warning',
+        message: `MinIO cluster health: ${healthyNodeCount}/${nodes.length} nodes reachable`
+      });
+      previousClusterHealth = clusterHealthy;
+    }
 
     const dashboard = {
       connected: true,
       bucket: BUCKET_NAME,
       overview: {
-        storageCapacity: 'Not reported',
-        availableStorage: 'Not reported',
+        storageCapacity: volumeNode ? formatBytes(volumeNode.capacityBytes) : 'Not reported',
+        availableStorage: volumeNode ? formatBytes(volumeNode.availableBytes) : 'Not reported',
+        usedStorage: volumeNode ? formatBytes(volumeNode.usedBytes) : 'Not reported',
+        storageUsagePercent: volumeNode ? volumeNode.usagePercent : null,
+        storageVolumeNode: volumeNode ? volumeNode.name : null,
         nodeHealth: `${healthyNodeCount} / ${nodes.length}`,
         replicationHealth: clusterHealthy ? 'Healthy' : 'Degraded',
-        systemAvailability: 'Not reported',
-        storageThroughput: 'Not reported'
+        systemAvailability,
+        storageThroughput
       },
       nodes: nodes,
       objects: objects,
@@ -219,27 +608,30 @@ app.get('/api/dashboard', async (req, res) => {
           ? 'No unavailable nodes detected. Recovery history records node health changes observed by this app; MinIO healing-job details are not exposed through its S3 API.'
           : `${nodes.length - healthyNodeCount} storage node(s) are unavailable. Recovery history records node health changes; MinIO repair job details are not exposed through its S3 API.`
       },
+      integrity: lastIntegrityResult || {
+        status: 'not-checked',
+        totalObjects: objects.length,
+        checked: 0,
+        passed: 0,
+        failed: 0,
+        unverified: objects.length,
+        detail: 'Run an integrity check to verify object contents against their stored checksums.'
+      },
       rebalance: {
-        status: clusterHealthy ? 'healthy' : 'attention',
+        status: 'unavailable',
         healthyNodes: healthyNodeCount,
         totalNodes: nodes.length,
         detail: `MinIO manages erasure-coded data placement. ${healthyNodeCount} of ${nodes.length} nodes are reachable. Rebalance progress and history are not exposed through its S3 API.`
       },
-      activity: [
-        {
-          time: new Date().toISOString(),
-          type: 'cluster health',
-          status: clusterHealthy ? 'ok' : 'warning',
-          message: `MinIO cluster health: ${healthyNodeCount}/${nodes.length} nodes reachable`
-        }
-      ]
+      activity: activityEvents
     };
 
     broadcastDashboardUpdate(dashboard);
     res.json(dashboard);
   } catch (err) {
     const disconnectedDashboard = buildDisconnectedDashboard();
-    console.warn('Dashboard unavailable:', err.message);
+    const message = err && err.message ? err.message : String(err || 'Unknown dashboard error');
+    console.warn('Dashboard unavailable:', message);
     res.json(disconnectedDashboard);
   }
 });
@@ -256,10 +648,46 @@ app.post('/api/objects/upload', upload.single('file'), async (req, res) => {
       return res.status(503).json({ error: 'Storage backend unavailable' });
     }
 
-    await minioClient.putObject(BUCKET_NAME, req.file.originalname, req.file.buffer);
-    res.json({ success: true, name: req.file.originalname });
+    const checksum = createHash('sha256').update(req.file.buffer).digest('hex');
+    await minioClient.putObject(
+      BUCKET_NAME,
+      req.file.originalname,
+      req.file.buffer,
+      req.file.size,
+      { 'x-amz-meta-sha256': checksum }
+    );
+    lastIntegrityResult = null;
+    lastIntegrityFingerprint = null;
+    recordActivity({
+      type: 'object uploaded',
+      status: 'ok',
+      message: `${req.file.originalname} uploaded (${req.file.size} bytes)`
+    });
+    res.json({ success: true, name: req.file.originalname, sha256: checksum });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const message = err && err.message ? err.message : String(err || 'Unknown upload error');
+    res.status(500).json({ error: message });
+  }
+});
+
+app.post('/api/integrity/verify', async (req, res) => {
+  try {
+    if (!await ensureBucket()) {
+      return res.status(503).json({ error: 'Storage backend unavailable' });
+    }
+
+    const verification = await verifyBucketIntegrity();
+    lastIntegrityResult = verification.result;
+    lastIntegrityFingerprint = verification.fingerprint;
+    recordActivity({
+      type: 'integrity check',
+      status: lastIntegrityResult.failed ? 'warning' : 'ok',
+      message: lastIntegrityResult.detail
+    });
+    res.json(lastIntegrityResult);
+  } catch (err) {
+    const message = err && err.message ? err.message : String(err || 'Unknown integrity check error');
+    res.status(500).json({ error: message });
   }
 });
 
